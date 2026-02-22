@@ -742,7 +742,7 @@ function initiateAuth() {
   state.clientSecret = clientSecret;
 
   const redirectUri = window.location.href.split('?')[0].split('#')[0];
-  const scope = 'activity:read_all,activity:write';
+  const scope = 'read,activity:read_all,activity:write';
   const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=force&scope=${scope}`;
 
   window.location.href = authUrl;
@@ -953,11 +953,11 @@ async function analyseSelected() {
 
   const act = state.selectedActivity;
 
-  // Fetch detailed activity to get HR zones etc
   showStatus('activityStatus', 'loading', 'Loading detailed stats for this run…');
 
   let detail = act;
-  let zones = null;
+  let rawZones = null;
+  let hadRealZones = false;
 
   try {
     const [detRes, zoneRes] = await Promise.all([
@@ -972,9 +972,12 @@ async function analyseSelected() {
     if (detRes.ok) detail = await detRes.json();
     if (zoneRes.ok) {
       const zData = await zoneRes.json();
-      zones = zData.find(z => z.type === 'heartrate');
+      rawZones = zData.find(z => z.type === 'heartrate');
+      if (rawZones && rawZones.distribution_buckets && rawZones.distribution_buckets.some(b => b.time > 0)) {
+        hadRealZones = true;
+      }
     }
-  } catch {}
+  } catch(e) { console.warn('Fetch error:', e); }
 
   hideStatus('activityStatus');
 
@@ -982,64 +985,57 @@ async function analyseSelected() {
   const kmThis = detail.distance / 1000;
 
   // Weekly km (this week Mon–Sun)
-  const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+  const nowD = new Date();
+  const weekStart = new Date(nowD);
+  weekStart.setDate(nowD.getDate() - nowD.getDay() + (nowD.getDay() === 0 ? -6 : 1));
   weekStart.setHours(0,0,0,0);
 
   const thisWeekKm = historyActivities
     .filter(a => new Date(a.start_date_local) >= weekStart)
     .reduce((s, a) => s + a.distance / 1000, 0);
 
-  // 4-week rolling weekly km
   const weeklyKms = [0,1,2,3].map(w => {
     const wEnd = new Date(weekStart.getTime() - w * 7 * 86400000);
-    const wStart = new Date(wEnd.getTime() - 7 * 86400000);
+    const wStart2 = new Date(wEnd.getTime() - 7 * 86400000);
     return historyActivities
-      .filter(a => {
-        const d = new Date(a.start_date_local);
-        return d >= wStart && d < wEnd;
-      })
+      .filter(a => { const d = new Date(a.start_date_local); return d >= wStart2 && d < wEnd; })
       .reduce((s, a) => s + a.distance / 1000, 0);
   });
 
   const rollingAvg28 = historyActivities.reduce((s, a) => s + a.distance / 1000, 0) / 4;
 
-  // TSS estimation (rTSS) — needs avg HR and max HR
-  // rTSS = (duration_hours × average_hr × IF² / hrTSS_const) × 100
-  // Simple formula: rTSS ≈ (sec × avgHR × avgHR) / (hrMax × hrMax × 3600) × 100
-  const hrMax = 200; // fallback — can be overridden
+  // Use actual max HR from activity if available, otherwise 185 as sensible default
+  const hrMax = detail.max_heartrate || 185;
   const avgHR = detail.average_heartrate || 150;
   const movingSec = detail.moving_time || 0;
-  const intensityFactor = avgHR / hrMax;
+  const intensityFactor = Math.min(avgHR / hrMax, 1);
   const tss = Math.round((movingSec / 3600) * intensityFactor * intensityFactor * 100);
 
-  // 28-day ATL/CTL
   const allTSS = historyActivities.map(a => {
     const hr = a.average_heartrate || 150;
+    const maxHr = a.max_heartrate || hrMax;
     const sec = a.moving_time || 0;
-    const IF = hr / hrMax;
-    return (sec / 3600) * IF * IF * 100;
+    const IF2 = Math.min(hr / maxHr, 1);
+    return (sec / 3600) * IF2 * IF2 * 100;
   });
 
   const ctl28 = allTSS.length ? allTSS.reduce((s,v) => s+v, 0) / 28 : 0;
-  const atl7  = allTSS.slice(0, 7).reduce((s,v) => s+v, 0) / 7 || 0;
+  const atl7 = allTSS.slice(0,7).reduce((s,v) => s+v, 0) / Math.min(7, allTSS.length || 1);
   const acwr = ctl28 > 0 ? (atl7 / ctl28) : null;
 
-  // HR zones — use Strava data if available, else estimate
+  // HR zones
   let zoneSeconds = [0, 0, 0, 0, 0];
-  if (zones && zones.distribution_buckets) {
-    zoneSeconds = zones.distribution_buckets.map(b => b.time || 0);
+  if (hadRealZones && rawZones.distribution_buckets) {
+    zoneSeconds = rawZones.distribution_buckets.map(b => b.time || 0);
     while (zoneSeconds.length < 5) zoneSeconds.push(0);
     zoneSeconds = zoneSeconds.slice(0, 5);
-  } else if (avgHR && movingSec) {
-    // Estimate based on avg HR intensity
+  } else if (movingSec > 0) {
     const pct = intensityFactor;
-    if (pct < 0.6) zoneSeconds = [movingSec*0.8, movingSec*0.15, movingSec*0.04, movingSec*0.01, 0];
-    else if (pct < 0.7) zoneSeconds = [movingSec*0.1, movingSec*0.65, movingSec*0.2, movingSec*0.04, movingSec*0.01];
-    else if (pct < 0.8) zoneSeconds = [movingSec*0.05, movingSec*0.3, movingSec*0.5, movingSec*0.12, movingSec*0.03];
-    else if (pct < 0.9) zoneSeconds = [movingSec*0.02, movingSec*0.1, movingSec*0.3, movingSec*0.5, movingSec*0.08];
-    else zoneSeconds = [movingSec*0.01, movingSec*0.05, movingSec*0.1, movingSec*0.2, movingSec*0.64];
+    if (pct < 0.6)      zoneSeconds = [movingSec*0.80, movingSec*0.15, movingSec*0.04, movingSec*0.01, 0];
+    else if (pct < 0.7) zoneSeconds = [movingSec*0.10, movingSec*0.65, movingSec*0.20, movingSec*0.04, movingSec*0.01];
+    else if (pct < 0.8) zoneSeconds = [movingSec*0.05, movingSec*0.30, movingSec*0.50, movingSec*0.12, movingSec*0.03];
+    else if (pct < 0.9) zoneSeconds = [movingSec*0.02, movingSec*0.10, movingSec*0.30, movingSec*0.50, movingSec*0.08];
+    else                zoneSeconds = [movingSec*0.01, movingSec*0.05, movingSec*0.10, movingSec*0.20, movingSec*0.64];
   }
 
   const totalZoneSec = zoneSeconds.reduce((s,v) => s+v, 0) || 1;
@@ -1059,7 +1055,8 @@ async function analyseSelected() {
     zoneSeconds,
     zonePcts,
     dominantZone,
-    intensityFactor
+    intensityFactor,
+    hadRealZones
   };
 
   renderResults();
@@ -1180,7 +1177,7 @@ function renderResults() {
       ${d.act.average_heartrate ? `Avg HR: ${Math.round(d.act.average_heartrate)} bpm · ` : ''}
       ${d.act.max_heartrate ? `Max HR: ${Math.round(d.act.max_heartrate)} bpm · ` : ''}
       Dominant: ${ZONES[d.dominantZone].label}
-      ${!zones ? ' · (estimated from avg HR — connect HR monitor for exact zones)' : ''}
+      ${!d.hadRealZones ? ' · (estimated from avg HR — connect HR monitor for exact zones)' : ''}
     </div>
   `;
 
