@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strava Load Analyser</title>
+<title>KadellThePhysio Data</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -596,8 +596,8 @@
   <!-- Header -->
   <div class="header">
     <div class="logo-area">
-      <h1>RUN<span>LOAD</span></h1>
-      <p>Strava Training Analysis · Auto Caption</p>
+      <h1>KADELL<span>DATA</span></h1>
+        <p>KadellThePhysio · Training Load Analysis</p>
     </div>
     <div class="strava-badge" id="connectionBadge">
       <div class="dot"></div>
@@ -669,8 +669,8 @@
     <div class="panel-header">
       <div class="panel-num" id="step3Num">3</div>
       <div>
-        <div class="panel-title">Training Load Analysis</div>
-        <div class="panel-sub">28-day rolling metrics · Ready to append to Strava caption</div>
+        <div class="panel-title">KadellThePhysio Data</div>
+        <div class="panel-sub">28-day rolling metrics · Weather-adjusted · Ready to append to Strava</div>
       </div>
     </div>
 
@@ -683,6 +683,9 @@
 
     <div class="section-divider">Heart Rate Zones</div>
     <div id="hrZones"></div>
+
+    <div class="section-divider">Weather & Pace Analysis</div>
+    <div id="weatherPace"></div>
 
     <div class="section-divider">Caption Preview</div>
     <div class="caption-box" id="captionPreview"></div>
@@ -1056,10 +1059,45 @@ async function analyseSelected() {
     zonePcts,
     dominantZone,
     intensityFactor,
-    hadRealZones
+    hadRealZones,
+    weather: null,
+    weeklyPaces: null
   };
 
+  // ── Pace trend: this week vs last week avg pace ──
+  const thisWeekRuns = historyActivities.filter(a => new Date(a.start_date_local) >= weekStart && a.average_speed > 0);
+  const lastWeekStart = new Date(weekStart.getTime() - 7 * 86400000);
+  const lastWeekRuns = historyActivities.filter(a => {
+    const d = new Date(a.start_date_local);
+    return d >= lastWeekStart && d < weekStart && a.average_speed > 0;
+  });
+
+  const avgPaceThisWeek = thisWeekRuns.length
+    ? thisWeekRuns.reduce((s, a) => s + (1000 / a.average_speed), 0) / thisWeekRuns.length
+    : null;
+  const avgPaceLastWeek = lastWeekRuns.length
+    ? lastWeekRuns.reduce((s, a) => s + (1000 / a.average_speed), 0) / lastWeekRuns.length
+    : null;
+
+  state.analysisData.avgPaceThisWeek = avgPaceThisWeek;
+  state.analysisData.avgPaceLastWeek = avgPaceLastWeek;
+
   renderResults();
+
+  // ── Fetch weather in background using activity GPS coords ──
+  const lat = detail.start_latlng?.[0];
+  const lng = detail.start_latlng?.[1];
+  const activityTime = Math.floor(new Date(detail.start_date).getTime() / 1000);
+
+  if (lat && lng) {
+    fetchWeather(lat, lng, activityTime).then(w => {
+      state.analysisData.weather = w;
+      renderWeatherPace();
+      renderCaption();
+    });
+  } else {
+    renderWeatherPace();
+  }
 }
 
 function renderResults() {
@@ -1182,7 +1220,118 @@ function renderResults() {
   `;
 
   // ── Caption ──
+  renderWeatherPace();
   renderCaption();
+}
+
+// ─────────────────────────────────────────────
+// Weather
+// ─────────────────────────────────────────────
+async function fetchWeather(lat, lng, unixTime) {
+  try {
+    // Open-Meteo: free, no API key, historical weather by hour
+    const date = new Date(unixTime * 1000);
+    const dateStr = date.toISOString().split('T')[0];
+    const hour = date.getUTCHours();
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,apparent_temperature,windspeed_10m,relativehumidity_2m,precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const h = data.hourly;
+    const idx = Math.min(hour, (h.time?.length || 1) - 1);
+
+    return {
+      temp: h.temperature_2m?.[idx],
+      feelsLike: h.apparent_temperature?.[idx],
+      wind: h.windspeed_10m?.[idx],
+      humidity: h.relativehumidity_2m?.[idx],
+      precip: h.precipitation?.[idx],
+      location: `${lat.toFixed(2)}, ${lng.toFixed(2)}`
+    };
+  } catch(e) {
+    console.warn('Weather fetch failed:', e);
+    return null;
+  }
+}
+
+// Weather-adjusted pace penalty formula:
+// Each 5°C above 15°C adds ~6 sec/km, humidity >70% adds ~3 sec/km
+// Wind >20km/h adds ~4 sec/km. Heat index uses feels-like.
+function calcWeatherPenalty(weather) {
+  if (!weather) return 0;
+  let penalty = 0;
+  const temp = weather.feelsLike ?? weather.temp ?? 15;
+  if (temp > 15) penalty += Math.round((temp - 15) / 5 * 6);
+  if (temp < 5)  penalty -= Math.round((5 - temp) / 5 * 3); // cold bonus (minimal)
+  if ((weather.humidity || 0) > 70) penalty += 3;
+  if ((weather.wind || 0) > 20) penalty += 4;
+  if ((weather.precip || 0) > 1) penalty += 2;
+  return penalty;
+}
+
+function renderWeatherPace() {
+  const d = state.analysisData;
+  const w = d.weather;
+  const act = d.act;
+  const el = document.getElementById('weatherPace');
+
+  const actualPaceSec = act.moving_time / (act.distance / 1000);
+  const penalty = calcWeatherPenalty(w);
+  const adjustedPaceSec = actualPaceSec - penalty;
+
+  // Pace trend
+  const paceThisStr = d.avgPaceThisWeek ? fmtPace(d.avgPaceThisWeek) : '--';
+  const paceLastStr = d.avgPaceLastWeek ? fmtPace(d.avgPaceLastWeek) : '--';
+  let paceTrendLabel = 'Insufficient data';
+  let paceTrendColor = 'var(--muted)';
+  if (d.avgPaceThisWeek && d.avgPaceLastWeek) {
+    const diff = d.avgPaceLastWeek - d.avgPaceThisWeek; // positive = faster this week
+    const absDiff = Math.abs(diff);
+    if (diff > 5) { paceTrendLabel = `↑ ${Math.round(absDiff)}s/km faster this week`; paceTrendColor = 'var(--green)'; }
+    else if (diff < -5) { paceTrendLabel = `↓ ${Math.round(absDiff)}s/km slower this week`; paceTrendColor = '#ef4444'; }
+    else { paceTrendLabel = 'Pace consistent week-on-week'; paceTrendColor = 'var(--yellow)'; }
+  }
+
+  const weatherHtml = w ? `
+    <div class="metric-card blue" style="grid-column: span 2;">
+      <div class="metric-label">Conditions at Run Start · GPS Auto-detected</div>
+      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:8px;">
+        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.temp?.toFixed(1) ?? '--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Temp</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.feelsLike?.toFixed(1) ?? '--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Feels like</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.humidity ?? '--'}%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Humidity</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.wind?.toFixed(0) ?? '--'} km/h</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Wind</div></div>
+        ${w.precip > 0 ? `<div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.precip?.toFixed(1)}mm</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Rain</div></div>` : ''}
+      </div>
+      ${penalty !== 0 ? `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--accent2);margin-top:10px;">
+        Weather penalty: +${penalty}s/km · Adjusted pace: <strong>${fmtPace(adjustedPaceSec)}/km</strong> (vs actual ${fmtPace(actualPaceSec)}/km)
+      </div>` : `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--green);margin-top:10px;">Ideal conditions — no pace adjustment needed</div>`}
+    </div>
+  ` : `
+    <div class="metric-card" style="grid-column: span 2;">
+      <div class="metric-label">Weather</div>
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-top:6px;">
+        ${act.start_latlng ? 'Fetching weather data…' : 'No GPS coordinates in this activity — weather unavailable'}
+      </div>
+    </div>
+  `;
+
+  el.innerHTML = `
+    <div class="metrics-grid" style="margin-bottom:0;">
+      <div class="metric-card">
+        <div class="metric-label">This Week Avg Pace</div>
+        <div class="metric-value" style="font-size:1.3rem;">${paceThisStr}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div>
+        <div class="metric-sub" style="color:${paceTrendColor};">${paceTrendLabel}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Last Week Avg Pace</div>
+        <div class="metric-value" style="font-size:1.3rem;">${paceLastStr}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div>
+        <div class="metric-sub">Prior 7-day average</div>
+      </div>
+      ${weatherHtml}
+    </div>
+  `;
 }
 
 function renderCaption() {
@@ -1190,13 +1339,16 @@ function renderCaption() {
   const act = d.act;
   const existingCaption = act.description ? act.description.trim() : '';
 
+  // Strip any previous KadellThePhysio Data block to avoid duplicates
+  const stripped = existingCaption.replace(/\n*📊 KADELLTHEPHYSIO DATA[\s\S]*$/, '').trim();
+
   const weekDiff = d.rollingAvg28 > 0 ? ((d.thisWeekKm - d.rollingAvg28) / d.rollingAvg28 * 100) : 0;
   const acwrStr = d.acwr !== null ? d.acwr.toFixed(2) : 'N/A';
 
-  let acwrStatus = 'Optimal load';
+  let acwrStatus = '✅ Optimal load range';
   if (d.acwr !== null) {
-    if (d.acwr < 0.8) acwrStatus = 'Below baseline — safe to build';
-    else if (d.acwr > 1.5) acwrStatus = '⚠️ Danger zone — rest needed';
+    if (d.acwr < 0.8) acwrStatus = '🔵 Below baseline — safe to build';
+    else if (d.acwr > 1.5) acwrStatus = '🔴 Danger zone — rest needed';
     else if (d.acwr > 1.3) acwrStatus = '⚡ High load — monitor carefully';
     else acwrStatus = '✅ Optimal load range';
   }
@@ -1204,26 +1356,54 @@ function renderCaption() {
   const dominantZonePct = (d.zonePcts[d.dominantZone] * 100).toFixed(0);
   const z2Pct = (d.zonePcts[1] * 100).toFixed(0);
 
-  const analysis = [
-    `\n\n📊 TRAINING LOAD ANALYSIS`,
-    `─────────────────────────`,
-    `📏 Distance: ${d.kmThis.toFixed(1)} km · Pace: ${fmtPace(act.moving_time/(act.distance/1000))}/km`,
-    `📅 Weekly km: ${d.thisWeekKm.toFixed(1)} km (${weekDiff>0?'+':''}${weekDiff.toFixed(0)}% vs ${d.rollingAvg28.toFixed(1)} km avg)`,
-    `💓 HR Zones: ${dominantZonePct}% ${ZONES[d.dominantZone].label} · Z2 aerobic: ${z2Pct}%`,
-    `⚡ Run TSS: ${d.tss} pts · CTL: ${d.ctl28.toFixed(1)} TSS/day`,
-    `📈 ACWR: ${acwrStr} — ${acwrStatus}`,
-    `─────────────────────────`,
-    `Generated by RunLoad Analyser`
-  ].join('\n');
-
-  const preview = document.getElementById('captionPreview');
-  if (existingCaption) {
-    preview.innerHTML = `<span style="color:var(--muted)">${escHtml(existingCaption)}</span><span class="new-content">${escHtml(analysis)}</span>`;
-  } else {
-    preview.innerHTML = `<span class="new-content">${escHtml(analysis)}</span>`;
+  // Pace trend line
+  let paceLine = '';
+  if (d.avgPaceThisWeek && d.avgPaceLastWeek) {
+    const diff = d.avgPaceLastWeek - d.avgPaceThisWeek;
+    const absDiff = Math.round(Math.abs(diff));
+    if (diff > 5) paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · ↑ ${absDiff}s/km faster than last wk`;
+    else if (diff < -5) paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · ↓ ${absDiff}s/km slower than last wk`;
+    else paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · consistent with last wk`;
+  } else if (d.avgPaceThisWeek) {
+    paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this week`;
   }
 
-  state.captionText = (existingCaption ? existingCaption + analysis : analysis);
+  // Weather line
+  let weatherLine = '';
+  const w = d.weather;
+  if (w) {
+    const penalty = calcWeatherPenalty(w);
+    const actualPaceSec = act.moving_time / (act.distance / 1000);
+    const adjustedPaceSec = actualPaceSec - penalty;
+    const conditionStr = `${w.temp?.toFixed(0)}°C feels ${w.feelsLike?.toFixed(0)}°C · ${w.humidity}% humidity · ${w.wind?.toFixed(0)}km/h wind`;
+    if (penalty > 0) {
+      weatherLine = `🌡️ ${conditionStr}\n   Weather-adjusted pace: ${fmtPace(adjustedPaceSec)}/km (+${penalty}s/km penalty)`;
+    } else {
+      weatherLine = `🌡️ ${conditionStr} · Ideal conditions`;
+    }
+  }
+
+  const lines = [
+    `\n\n📊 KADELLTHEPHYSIO DATA`,
+    `─────────────────────────`,
+    `📅 Weekly km: ${d.thisWeekKm.toFixed(1)} km (${weekDiff>0?'+':''}${weekDiff.toFixed(0)}% vs ${d.rollingAvg28.toFixed(1)} km avg)`,
+    paceLine,
+    weatherLine,
+    `💓 HR Zones: ${dominantZonePct}% ${ZONES[d.dominantZone].label} · Z2: ${z2Pct}%`,
+    `⚡ TSS: ${d.tss} pts · CTL: ${d.ctl28.toFixed(1)} TSS/day`,
+    `📈 ACWR: ${acwrStr} — ${acwrStatus}`,
+    `─────────────────────────`,
+    `KadellThePhysio Data`
+  ].filter(Boolean).join('\n');
+
+  const preview = document.getElementById('captionPreview');
+  if (stripped) {
+    preview.innerHTML = `<span style="color:var(--muted)">${escHtml(stripped)}</span><span class="new-content">${escHtml(lines)}</span>`;
+  } else {
+    preview.innerHTML = `<span class="new-content">${escHtml(lines)}</span>`;
+  }
+
+  state.captionText = (stripped ? stripped + lines : lines);
 }
 
 // ─────────────────────────────────────────────
