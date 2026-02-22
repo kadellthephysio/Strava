@@ -7,1517 +7,1455 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0c10;
-    --surface: #111318;
-    --surface2: #1a1d25;
-    --border: #252830;
-    --accent: #fc4c02;
-    --accent2: #ff8c42;
-    --green: #22c55e;
-    --yellow: #f59e0b;
-    --blue: #3b82f6;
-    --purple: #a855f7;
-    --text: #e8eaf0;
-    --muted: #6b7280;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Syne', sans-serif;
+    --bg:#0a0c10;--surface:#111318;--surface2:#1a1d25;--border:#252830;
+    --accent:#fc4c02;--accent2:#ff8c42;--green:#22c55e;--yellow:#f59e0b;
+    --blue:#3b82f6;--purple:#a855f7;--cyan:#06b6d4;--text:#e8eaf0;--muted:#6b7280;
+    --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
   }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(252,76,2,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(252,76,2,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .container{max-width:900px;margin:0 auto;padding:36px 24px 80px;position:relative;z-index:1;}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;animation:fadeDown 0.6s ease both;}
+  .logo-area h1{font-size:2rem;font-weight:800;letter-spacing:-0.03em;line-height:1;}
+  .logo-area h1 span{color:var(--accent);}
+  .logo-area p{font-family:var(--mono);font-size:0.7rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:6px;}
+  .strava-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:var(--mono);font-size:0.7rem;color:var(--muted);}
+  .strava-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+  .strava-badge.connected .dot{background:var(--green);box-shadow:0 0 8px var(--green);}
+  .strava-badge.connected{color:var(--text);}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  /* Settings */
+  .settings-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;animation:fadeUp 0.4s ease both;}
+  .settings-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;user-select:none;}
+  .settings-toggle:hover{background:var(--surface2);}
+  .settings-title{font-family:var(--mono);font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:8px;}
+  .settings-chevron{transition:transform 0.3s;color:var(--muted);}
+  .settings-chevron.open{transform:rotate(180deg);}
+  .settings-body{padding:0 20px 20px;display:none;}
+  .settings-body.open{display:block;}
+  .settings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px;}
+  .settings-note{font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-top:10px;line-height:1.6;}
+  .lt2-box{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:0.7rem;color:var(--accent2);margin-top:12px;line-height:1.7;}
 
-  /* Background grid */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(252,76,2,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(252,76,2,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;}
+  .tab{flex:1;padding:10px;border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-size:0.82rem;font-weight:700;cursor:pointer;border-radius:7px;transition:all 0.2s;letter-spacing:0.01em;}
+  .tab:hover{color:var(--text);}
+  .tab.active{background:var(--accent);color:white;}
+  .tab.active.cyc{background:var(--cyan);color:#000;}
 
-  .container {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-    position: relative;
-    z-index: 1;
-  }
+  /* Panel */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;animation:fadeUp 0.5s ease both;}
+  .panel-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .panel-num{width:28px;height:28px;border-radius:6px;background:var(--accent);color:white;font-family:var(--mono);font-size:0.75rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .panel-num.done{background:var(--green);}
+  .panel-num.locked{background:var(--surface2);color:var(--muted);}
+  .panel-title{font-size:1rem;font-weight:700;letter-spacing:-0.01em;}
+  .panel-sub{font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-top:2px;}
 
-  /* Header */
-  .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 48px;
-    animation: fadeDown 0.6s ease both;
-  }
-
-  .logo-area h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
-  }
-
-  .logo-area h1 span {
-    color: var(--accent);
-  }
-
-  .logo-area p {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-top: 6px;
-  }
-
-  .strava-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-
-  .strava-badge .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-  }
-  .strava-badge.connected .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .strava-badge.connected { color: var(--text); }
-
-  /* Setup panel */
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
-    margin-bottom: 20px;
-    animation: fadeUp 0.5s ease both;
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .panel-num {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: var(--accent);
-    color: white;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    font-weight: 500;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .panel-num.done { background: var(--green); }
-  .panel-num.locked { background: var(--surface2); color: var(--muted); }
-
-  .panel-title {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-
-  .panel-sub {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  /* Form elements */
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .field label {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .field input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    outline: none;
-    transition: border-color 0.2s;
-    width: 100%;
-  }
-
-  .field input:focus { border-color: var(--accent); }
-  .field input::placeholder { color: var(--muted); }
-
-  .hint {
-    background: rgba(252,76,2,0.06);
-    border: 1px solid rgba(252,76,2,0.2);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--accent2);
-    line-height: 1.7;
-    margin-bottom: 16px;
-  }
-
-  .hint a { color: var(--accent); }
+  /* Fields */
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-family:var(--mono);font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+  .field input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:0.8rem;outline:none;transition:border-color 0.2s;width:100%;}
+  .field input:focus{border-color:var(--accent);}
+  .field input::placeholder{color:var(--muted);}
+  .hint{background:rgba(252,76,2,0.06);border:1px solid rgba(252,76,2,0.2);border-radius:8px;padding:12px 16px;font-family:var(--mono);font-size:0.72rem;color:var(--accent2);line-height:1.7;margin-bottom:16px;}
+  .hint a{color:var(--accent);}
 
   /* Buttons */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-family: var(--sans);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    text-decoration: none;
-    letter-spacing: 0.01em;
-  }
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:var(--sans);font-size:0.85rem;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;text-decoration:none;letter-spacing:0.01em;}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-primary:hover{background:#e04400;transform:translateY(-1px);}
+  .btn-primary:disabled{background:var(--muted);cursor:not-allowed;transform:none;}
+  .btn-cyan{background:var(--cyan);color:#000;}
+  .btn-cyan:hover{background:#0891b2;color:#fff;transform:translateY(-1px);}
+  .btn-cyan:disabled{background:var(--muted);cursor:not-allowed;transform:none;color:white;}
+  .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-ghost{background:var(--surface2);color:var(--muted);font-size:0.75rem;padding:8px 14px;}
+  .btn-ghost:hover{color:var(--text);background:var(--border);}
 
-  .btn-primary {
-    background: var(--accent);
-    color: white;
-  }
-  .btn-primary:hover { background: #e04400; transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+  /* Activity cards */
+  .activity-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;}
+  .activity-card:hover{border-color:var(--accent);}
+  .activity-card.selected{border-color:var(--accent);background:rgba(252,76,2,0.05);}
+  .cyc-card:hover{border-color:var(--cyan) !important;}
+  .cyc-card.selected{border-color:var(--cyan) !important;background:rgba(6,182,212,0.05) !important;}
+  .act-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .act-name{font-weight:700;font-size:0.9rem;}
+  .act-date{font-family:var(--mono);font-size:0.65rem;color:var(--muted);}
+  .act-stats{display:flex;gap:20px;flex-wrap:wrap;}
+  .act-stat .val{font-family:var(--mono);font-size:0.85rem;font-weight:500;}
+  .act-stat .lbl{font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
 
-  .btn-outline {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  /* Metrics grid */
+  .metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);}
+  .metric-card.green::before{background:var(--green);}
+  .metric-card.yellow::before{background:var(--yellow);}
+  .metric-card.blue::before{background:var(--blue);}
+  .metric-card.cyan::before{background:var(--cyan);}
+  .metric-card.red::before{background:#ef4444;}
+  .metric-label{font-family:var(--mono);font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;}
+  .metric-value{font-family:var(--mono);font-size:1.6rem;font-weight:500;line-height:1;margin-bottom:4px;}
+  .metric-sub{font-family:var(--mono);font-size:0.65rem;color:var(--muted);}
 
-  .btn-ghost {
-    background: var(--surface2);
-    color: var(--muted);
-    font-size: 0.75rem;
-    padding: 8px 14px;
-  }
-  .btn-ghost:hover { color: var(--text); background: var(--border); }
-
-  /* Activity card */
-  .activity-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .activity-card:hover { border-color: var(--accent); }
-  .activity-card.selected { border-color: var(--accent); background: rgba(252,76,2,0.05); }
-
-  .activity-card .act-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  .act-name {
-    font-weight: 700;
-    font-size: 0.9rem;
-  }
-
-  .act-date {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-  }
-
-  .act-stats {
-    display: flex;
-    gap: 20px;
-  }
-
-  .act-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .act-stat .val {
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .act-stat .lbl {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  /* Metrics dashboard */
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .metric-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-  }
-
-  .metric-card.green::before { background: var(--green); }
-  .metric-card.yellow::before { background: var(--yellow); }
-  .metric-card.blue::before { background: var(--blue); }
-  .metric-card.purple::before { background: var(--purple); }
-
-  .metric-label {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 8px;
-  }
-
-  .metric-value {
-    font-family: var(--mono);
-    font-size: 1.6rem;
-    font-weight: 500;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-
-  .metric-sub {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-  }
-
-  /* HR Zone bar */
-  .zone-bar {
-    display: flex;
-    height: 20px;
-    border-radius: 6px;
-    overflow: hidden;
-    margin: 12px 0 8px;
-    gap: 2px;
-  }
-
-  .zone-seg {
-    height: 100%;
-    transition: width 0.8s ease;
-    border-radius: 2px;
-  }
-
-  .zone-legend {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .zone-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--muted);
-  }
-
-  .zone-dot {
-    width: 8px; height: 8px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
+  /* Zone bar */
+  .zone-bar{display:flex;height:20px;border-radius:6px;overflow:hidden;margin:12px 0 8px;gap:2px;}
+  .zone-seg{height:100%;border-radius:2px;}
+  .zone-legend{display:flex;gap:12px;flex-wrap:wrap;}
+  .zone-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:0.62rem;color:var(--muted);}
+  .zone-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
 
   /* ACWR gauge */
-  .acwr-display {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .acwr-display{display:flex;align-items:center;gap:16px;}
+  .acwr-gauge{position:relative;width:80px;height:80px;flex-shrink:0;}
+  .acwr-gauge svg{transform:rotate(-90deg);}
+  .acwr-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.9rem;font-weight:500;}
+  .acwr-info .adesc{font-family:var(--mono);font-size:0.65rem;color:var(--muted);line-height:1.5;margin-top:6px;}
 
-  .acwr-gauge {
-    position: relative;
-    width: 80px; height: 80px;
-    flex-shrink: 0;
-  }
+  /* km chart */
+  .km-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin:8px 0 4px;}
+  .km-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+  .km-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;}
+  .km-bar-label{font-family:var(--mono);font-size:0.5rem;color:var(--muted);text-align:center;}
 
-  .acwr-gauge svg { transform: rotate(-90deg); }
+  .caption-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--mono);font-size:0.78rem;line-height:1.8;white-space:pre-wrap;color:var(--text);margin-bottom:16px;min-height:80px;}
+  .new-content{color:var(--accent2);border-left:2px solid var(--accent);padding-left:10px;margin-left:-10px;}
 
-  .acwr-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--mono);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transform: none;
-  }
+  .status-bar{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-family:var(--mono);font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .status-bar.error{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.05);}
+  .status-bar.success{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.05);}
+  .status-bar.loading{border-color:var(--accent);color:var(--accent2);background:rgba(252,76,2,0.05);}
+  .spinner{width:12px;height:12px;border:2px solid rgba(252,76,2,0.3);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
 
-  .acwr-info { flex: 1; }
-  .acwr-info .status {
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-  }
-  .acwr-info .desc {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-    line-height: 1.5;
-  }
+  .section-divider{display:flex;align-items:center;gap:12px;margin:8px 0 14px;font-family:var(--mono);font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+  .section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-  /* Caption preview */
-  .caption-box {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    color: var(--text);
-    margin-bottom: 16px;
-    min-height: 80px;
-  }
+  .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:0.62rem;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;}
+  .tag-optimal{background:rgba(34,197,94,0.15);color:var(--green);}
+  .tag-caution{background:rgba(245,158,11,0.15);color:var(--yellow);}
+  .tag-high{background:rgba(239,68,68,0.15);color:#ef4444;}
+  .tag-low{background:rgba(59,130,246,0.15);color:var(--blue);}
 
-  .caption-box .new-content {
-    color: var(--accent2);
-    border-left: 2px solid var(--accent);
-    padding-left: 10px;
-    margin-left: -10px;
-  }
+  .hidden{display:none !important;}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:640px){.field-row,.settings-grid,.metrics-grid{grid-template-columns:1fr 1fr;}.logo-area h1{font-size:1.5rem;}}
 
-  /* Status messages */
-  .status-bar {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .status-bar.error { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.05); }
-  .status-bar.success { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.05); }
-  .status-bar.loading { border-color: var(--accent); color: var(--accent2); background: rgba(252,76,2,0.05); }
-
-  .spinner {
-    width: 12px; height: 12px;
-    border: 2px solid rgba(252,76,2,0.3);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
-  }
-
-  /* KM chart */
-  .km-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 3px;
-    height: 60px;
-    margin: 12px 0 6px;
-  }
-
-  .km-bar-wrap {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    height: 100%;
-    justify-content: flex-end;
-  }
-
-  .km-bar {
-    width: 100%;
-    border-radius: 3px 3px 0 0;
-    transition: height 0.6s ease;
-    min-height: 2px;
-  }
-
-  .km-bar-label {
-    font-family: var(--mono);
-    font-size: 0.5rem;
-    color: var(--muted);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .km-avg-line {
-    position: relative;
-    margin-top: -2px;
-  }
-
-  /* Sections */
-  .section-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 8px 0 16px;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-
-  .section-divider::before, .section-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .hidden { display: none !important; }
-
-  /* Animations */
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .panel:nth-child(2) { animation-delay: 0.1s; }
-  .panel:nth-child(3) { animation-delay: 0.2s; }
-  .panel:nth-child(4) { animation-delay: 0.3s; }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .tag-optimal { background: rgba(34,197,94,0.15); color: var(--green); }
-  .tag-caution { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .tag-high { background: rgba(239,68,68,0.15); color: #ef4444; }
-  .tag-low { background: rgba(59,130,246,0.15); color: var(--blue); }
-
-  @media (max-width: 640px) {
-    .field-row { grid-template-columns: 1fr; }
-    .metrics-grid { grid-template-columns: 1fr 1fr; }
-    .logo-area h1 { font-size: 1.5rem; }
-  }
+  /* ── Export Modal ── */
+  .export-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .export-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);}
+  .export-sheet{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;animation:fadeUp 0.3s ease both;}
+  .export-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .export-title{font-size:1rem;font-weight:800;letter-spacing:-0.01em;}
+  .export-sub{font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:2px;}
+  .export-close{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+  .export-close:hover{color:var(--text);border-color:var(--accent);}
+  .export-body{display:grid;grid-template-columns:280px 1fr;gap:0;overflow:auto;}
+  .export-controls{padding:20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+  .ctrl-label{font-family:var(--mono);font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;}
+  .style-pills{display:flex;gap:6px;}
+  .style-pill{flex:1;display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--mono);font-size:0.68rem;cursor:pointer;transition:all 0.2s;}
+  .style-pill:hover{border-color:var(--purple);color:var(--text);}
+  .style-pill.active{border-color:var(--purple);color:var(--text);background:rgba(168,85,247,0.08);}
+  .style-swatch{width:16px;height:16px;border-radius:4px;flex-shrink:0;}
+  .dark-swatch{background:#0a0c10;border:1px solid #333;}
+  .light-swatch{background:#f8f9fa;border:1px solid #ddd;}
+  .grad-swatch{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);}
+  .toggle-list{display:flex;flex-direction:column;gap:6px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+  .toggle-row-label{font-family:var(--mono);font-size:0.68rem;color:var(--text);}
+  .toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+  .toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:0.2s;}
+  .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+  .toggle-switch input:checked+.toggle-slider{background:var(--purple);}
+  .toggle-switch input:checked+.toggle-slider::before{transform:translateX(16px);}
+  .accent-swatches{display:flex;gap:8px;flex-wrap:wrap;}
+  .accent-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s;}
+  .accent-dot:hover{transform:scale(1.15);}
+  .accent-dot.active{border-color:white;box-shadow:0 0 0 2px rgba(255,255,255,0.3);}
+  .export-preview-wrap{padding:20px;display:flex;flex-direction:column;align-items:center;background:var(--bg);overflow-y:auto;}
+  .export-preview-label{font-family:var(--mono);font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;align-self:flex-start;}
+  .preview-frame{border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+  .preview-frame canvas{display:block;width:auto;max-height:55vh;}
+  @media(max-width:700px){.export-body{grid-template-columns:1fr;}.preview-frame canvas{max-height:40vh;}}
 </style>
 </head>
 <body>
 <div class="container">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="logo-area">
-      <h1>KADELL<span>DATA</span></h1>
-        <p>KadellThePhysio · Training Load Analysis</p>
+<!-- Header -->
+<div class="header">
+  <div class="logo-area">
+    <h1>KADELL<span>DATA</span></h1>
+    <p>KadellThePhysio · Training Load Analysis</p>
+  </div>
+  <div class="strava-badge" id="connectionBadge"><div class="dot"></div><span id="connectionLabel">Not connected</span></div>
+</div>
+
+<!-- Settings -->
+<div class="settings-bar">
+  <div class="settings-toggle" onclick="toggleSettings()">
+    <div class="settings-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Athlete Settings
     </div>
-    <div class="strava-badge" id="connectionBadge">
-      <div class="dot"></div>
-      <span id="connectionLabel">Not connected</span>
+    <svg class="settings-chevron" id="settingsChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="settings-body" id="settingsBody">
+    <div class="settings-grid">
+      <div class="field"><label>Age</label><input type="number" id="s_age" value="28" onchange="saveSettings()"/></div>
+      <div class="field"><label>Max HR (bpm)</label><input type="number" id="s_hrmax" value="192" onchange="saveSettings()"/></div>
+      <div class="field"><label>Resting HR (bpm)</label><input type="number" id="s_hrrest" value="50" onchange="saveSettings()"/></div>
+      <div class="field"><label>Run LTHR (bpm)</label><input type="number" id="s_run_lthr" value="178" onchange="saveSettings()"/></div>
+      <div class="field"><label>Cycle LTHR (bpm)</label><input type="number" id="s_cyc_lthr" value="172" onchange="saveSettings()"/></div>
+      <div class="field"><label>FTP (watts)</label><input type="number" id="s_ftp" value="238" onchange="saveSettings()"/></div>
+    </div>
+    <div id="lt2Box" class="lt2-box hidden"></div>
+    <div class="settings-note">
+      All settings saved in your browser · Run LTHR → running TSS &amp; zones · Cycle LTHR → outdoor ride TSS · FTP → trainer/power meter TSS ·
+      <span style="color:var(--accent);cursor:pointer;" onclick="estimateLT2()">Auto-estimate Run LT2 from recent data →</span>
     </div>
   </div>
+</div>
 
-  <!-- Step 1: API Setup -->
-  <div class="panel" id="setupPanel">
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" id="tabRun" onclick="switchTab('run')">🏃 Running</button>
+  <button class="tab" id="tabCyc" onclick="switchTab('cyc')">🚴 Cycling</button>
+</div>
+
+<!-- ═══ RUNNING TAB ═══ -->
+<div id="runTab">
+  <div class="panel">
     <div class="panel-header">
       <div class="panel-num" id="step1Num">1</div>
-      <div>
-        <div class="panel-title">Connect Strava API</div>
-        <div class="panel-sub">One-time setup — your credentials stay in your browser only</div>
-      </div>
+      <div><div class="panel-title">Connect Strava API</div><div class="panel-sub">One-time setup — credentials stay in your browser only</div></div>
     </div>
-
     <div class="hint">
       ① Go to <a href="https://www.strava.com/settings/api" target="_blank">strava.com/settings/api</a> → Create App<br>
-      ② Set <strong>Authorization Callback Domain</strong> to your domain (or <code>localhost</code> for local use)<br>
-      ③ Copy your <strong>Client ID</strong> and <strong>Client Secret</strong> below<br>
-      ④ Set <strong>Athlete Heart Rate</strong> scope on authorization — app requests this automatically
+      ② <strong>Authorization Callback Domain</strong> → <code>kadellthephysio.github.io</code><br>
+      ③ Paste Client ID and Secret below
     </div>
-
     <div class="field-row">
-      <div class="field">
-        <label>Client ID</label>
-        <input type="text" id="clientId" placeholder="e.g. 12345" />
-      </div>
-      <div class="field">
-        <label>Client Secret</label>
-        <input type="password" id="clientSecret" placeholder="••••••••••••••••••••" />
-      </div>
+      <div class="field"><label>Client ID</label><input type="text" id="clientId" placeholder="e.g. 12345"/></div>
+      <div class="field"><label>Client Secret</label><input type="password" id="clientSecret" placeholder="••••••••••••••••••••"/></div>
     </div>
-
-    <div style="display:flex; gap:10px; align-items:center;">
+    <div style="display:flex;gap:10px;">
       <button class="btn btn-primary" onclick="initiateAuth()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Authorise with Strava
       </button>
-      <button class="btn btn-ghost" onclick="loadSavedCredentials()">Load Saved</button>
+      <button class="btn btn-ghost" onclick="loadSavedCreds()">Load Saved</button>
     </div>
   </div>
 
-  <!-- Step 2: Pick Activity -->
-  <div class="panel" id="activityPanel">
+  <div class="panel">
     <div class="panel-header">
       <div class="panel-num locked" id="step2Num">2</div>
-      <div>
-        <div class="panel-title">Select Run to Analyse</div>
-        <div class="panel-sub">Fetches your last 10 runs — pick the one just uploaded from Garmin</div>
-      </div>
+      <div><div class="panel-title">Select Run to Analyse</div><div class="panel-sub">Last 10 runs — pick the one just uploaded from Garmin</div></div>
     </div>
-
-    <div id="activityStatus" class="hidden"></div>
-    <div id="activityList"></div>
-
-    <div style="display:flex; gap:10px; margin-top:4px;">
-      <button class="btn btn-primary" id="fetchBtn" onclick="fetchActivities()" disabled>
+    <div id="runStatus" class="hidden"></div>
+    <div id="runList"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary" id="runFetchBtn" onclick="fetchActs('run')" disabled>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Fetch Recent Runs
       </button>
-      <button class="btn btn-outline" id="analyseBtn" onclick="analyseSelected()" disabled>Analyse Selected →</button>
+      <button class="btn btn-outline" id="runAnalyseBtn" onclick="doAnalyse('run')" disabled>Analyse Selected →</button>
     </div>
   </div>
 
-  <!-- Step 3: Analysis Results -->
-  <div class="panel hidden" id="resultsPanel">
+  <div class="panel hidden" id="runResults">
     <div class="panel-header">
-      <div class="panel-num" id="step3Num">3</div>
-      <div>
-        <div class="panel-title">KadellThePhysio Data</div>
-        <div class="panel-sub">28-day rolling metrics · Weather-adjusted · Ready to append to Strava</div>
-      </div>
+      <div class="panel-num done">3</div>
+      <div><div class="panel-title">KadellThePhysio Data · Run</div><div class="panel-sub">28-day rolling · Weather-adjusted · Ready to append</div></div>
     </div>
-
     <div class="section-divider">Weekly Distance</div>
-    <div class="metrics-grid" id="kmMetrics"></div>
-    <div id="kmChart" style="padding: 0 4px;"></div>
-
+    <div class="metrics-grid" id="runKmCards"></div>
+    <div id="runKmChart" style="margin-bottom:16px;"></div>
     <div class="section-divider">Training Stress Score</div>
-    <div class="metrics-grid" id="tssMetrics"></div>
-
+    <div class="metrics-grid" id="runTssCards"></div>
     <div class="section-divider">Heart Rate Zones</div>
-    <div id="hrZones"></div>
-
-    <div class="section-divider">Weather & Pace Analysis</div>
-    <div id="weatherPace"></div>
-
+    <div id="runZones" style="margin-bottom:16px;"></div>
+    <div class="section-divider">Pace & Weather</div>
+    <div id="runPaceWeather" style="margin-bottom:16px;"></div>
     <div class="section-divider">Caption Preview</div>
-    <div class="caption-box" id="captionPreview"></div>
-
-    <div id="updateStatus" class="hidden"></div>
-
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-primary" id="updateBtn" onclick="updateStrava()">
+    <div class="caption-box" id="runCaption"></div>
+    <div id="runUpdateStatus" class="hidden"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="runUpdateBtn" onclick="pushToStrava('run')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         Update Strava Caption
       </button>
-      <button class="btn btn-outline" onclick="copyCaption()">Copy Caption Text</button>
-      <button class="btn btn-ghost" onclick="resetAnalysis()">← New Run</button>
+      <button class="btn btn-outline" onclick="copyText('run')">Copy Caption</button>
+      <button class="btn btn-outline" onclick="openExport('run')" style="border-color:var(--purple);color:var(--purple);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Export Story Card
+      </button>
+      <button class="btn btn-ghost" onclick="resetPanel('run')">← New Run</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CYCLING TAB ═══ -->
+<div id="cycTab" class="hidden">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-num locked" id="cycStep1Num">1</div>
+      <div><div class="panel-title">Select Ride to Analyse</div><div class="panel-sub">Last 10 rides — picks up Garmin synced rides automatically</div></div>
+    </div>
+    <div id="cycStatus" class="hidden"></div>
+    <div id="cycList"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-cyan" id="cycFetchBtn" onclick="fetchActs('cyc')" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Fetch Recent Rides
+      </button>
+      <button class="btn btn-outline" id="cycAnalyseBtn" onclick="doAnalyse('cyc')" disabled>Analyse Selected →</button>
     </div>
   </div>
 
+  <div class="panel hidden" id="cycResults">
+    <div class="panel-header">
+      <div class="panel-num done" style="background:var(--cyan);">✓</div>
+      <div><div class="panel-title">KadellThePhysio Data · Cycling</div><div class="panel-sub">28-day rolling · Power/HR TSS · Ready to append</div></div>
+    </div>
+    <div class="section-divider">Weekly Distance</div>
+    <div class="metrics-grid" id="cycKmCards"></div>
+    <div id="cycKmChart" style="margin-bottom:16px;"></div>
+    <div class="section-divider">Training Stress Score</div>
+    <div class="metrics-grid" id="cycTssCards"></div>
+    <div class="section-divider">Heart Rate Zones</div>
+    <div id="cycZones" style="margin-bottom:16px;"></div>
+    <div class="section-divider">Elevation Trend</div>
+    <div class="metrics-grid" id="cycElevCards"></div>
+    <div class="section-divider">Weather</div>
+    <div id="cycWeatherDiv" style="margin-bottom:16px;"></div>
+    <div class="section-divider">Caption Preview</div>
+    <div class="caption-box" id="cycCaption"></div>
+    <div id="cycUpdateStatus" class="hidden"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-cyan" id="cycUpdateBtn" onclick="pushToStrava('cyc')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Update Strava Caption
+      </button>
+      <button class="btn btn-outline" onclick="copyText('cyc')">Copy Caption</button>
+      <button class="btn btn-outline" onclick="openExport('cyc')" style="border-color:var(--purple);color:var(--purple);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Export Story Card
+      </button>
+      <button class="btn btn-ghost" onclick="resetPanel('cyc')">← New Ride</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══ EXPORT MODAL ═══ -->
+<div id="exportModal" class="export-modal hidden">
+  <div class="export-backdrop" onclick="closeExport()"></div>
+  <div class="export-sheet">
+    <div class="export-header">
+      <div>
+        <div class="export-title">Story Card Export</div>
+        <div class="export-sub">9:16 · 1080 × 1920px · Instagram / TikTok ready</div>
+      </div>
+      <button class="export-close" onclick="closeExport()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="export-body">
+      <div class="export-controls">
+        <div>
+          <div class="ctrl-label">Visual Style</div>
+          <div class="style-pills">
+            <button class="style-pill active" id="styleDark" onclick="setExStyle('dark')"><div class="style-swatch dark-swatch"></div>Dark</button>
+            <button class="style-pill" id="styleLight" onclick="setExStyle('light')"><div class="style-swatch light-swatch"></div>Light</button>
+            <button class="style-pill" id="styleGrad" onclick="setExStyle('gradient')"><div class="style-swatch grad-swatch"></div>Grad</button>
+          </div>
+        </div>
+        <div id="accentSection">
+          <div class="ctrl-label">Accent Colour</div>
+          <div class="accent-swatches">
+            <div class="accent-dot active" style="background:#fc4c02;" onclick="setAccent('#fc4c02',this)"></div>
+            <div class="accent-dot" style="background:#06b6d4;" onclick="setAccent('#06b6d4',this)"></div>
+            <div class="accent-dot" style="background:#a855f7;" onclick="setAccent('#a855f7',this)"></div>
+            <div class="accent-dot" style="background:#22c55e;" onclick="setAccent('#22c55e',this)"></div>
+            <div class="accent-dot" style="background:#f59e0b;" onclick="setAccent('#f59e0b',this)"></div>
+            <div class="accent-dot" style="background:#ec4899;" onclick="setAccent('#ec4899',this)"></div>
+          </div>
+        </div>
+        <div>
+          <div class="ctrl-label">Data Blocks</div>
+          <div class="toggle-list" id="exportToggles"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="downloadCard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+        <div id="exportStatus" style="font-family:var(--mono);font-size:0.68rem;color:var(--green);text-align:center;display:none;"></div>
+      </div>
+      <div class="export-preview-wrap">
+        <div class="export-preview-label">Live Preview</div>
+        <div class="preview-frame">
+          <canvas id="exportCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────
-let state = {
-  clientId: '',
-  clientSecret: '',
-  accessToken: '',
-  athleteId: '',
-  activities: [],
-  selectedActivity: null,
-  analysisData: null
-};
+// ══════════════════════════════════════════════
+// STATE & CONSTANTS
+// ══════════════════════════════════════════════
+const ZONES=[{label:'Z1 Recovery',color:'#3b82f6'},{label:'Z2 Aerobic',color:'#22c55e'},{label:'Z3 Tempo',color:'#f59e0b'},{label:'Z4 Threshold',color:'#f97316'},{label:'Z5 VO2max',color:'#ef4444'}];
+let S={age:28,hrMax:192,hrRest:50,runLTHR:178,cycLTHR:172,ftp:238};
+let A={token:'',clientId:'',clientSecret:''};
+let D={run:{acts:[],history:[],selected:null,analysis:null},cyc:{acts:[],history:[],selected:null,analysis:null}};
 
-const ZONES = [
-  { label: 'Z1 Recovery', color: '#3b82f6', max_pct: 0.6 },
-  { label: 'Z2 Aerobic',  color: '#22c55e', max_pct: 0.7 },
-  { label: 'Z3 Tempo',    color: '#f59e0b', max_pct: 0.8 },
-  { label: 'Z4 Threshold',color: '#f97316', max_pct: 0.9 },
-  { label: 'Z5 VO2max',   color: '#ef4444', max_pct: 1.0 }
-];
-
-// ─────────────────────────────────────────────
-// OAuth flow
-// ─────────────────────────────────────────────
-function initiateAuth() {
-  const clientId = document.getElementById('clientId').value.trim();
-  const clientSecret = document.getElementById('clientSecret').value.trim();
-
-  if (!clientId || !clientSecret) {
-    showStatus('activityStatus', 'error', 'Please enter both Client ID and Client Secret');
-    return;
-  }
-
-  // Save credentials
-  localStorage.setItem('strava_client_id', clientId);
-  localStorage.setItem('strava_client_secret', clientSecret);
-  state.clientId = clientId;
-  state.clientSecret = clientSecret;
-
-  const redirectUri = window.location.href.split('?')[0].split('#')[0];
-  const scope = 'read,activity:read_all,activity:write';
-  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=force&scope=${scope}`;
-
-  window.location.href = authUrl;
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function loadSettings(){
+  try{const s=localStorage.getItem('kadell_s');if(s)S={...S,...JSON.parse(s)};}catch{}
+  document.getElementById('s_age').value=S.age;
+  document.getElementById('s_hrmax').value=S.hrMax;
+  document.getElementById('s_hrrest').value=S.hrRest;
+  document.getElementById('s_run_lthr').value=S.runLTHR;
+  document.getElementById('s_cyc_lthr').value=S.cycLTHR;
+  document.getElementById('s_ftp').value=S.ftp;
+}
+function saveSettings(){
+  S={age:+document.getElementById('s_age').value||28,hrMax:+document.getElementById('s_hrmax').value||192,hrRest:+document.getElementById('s_hrrest').value||50,runLTHR:+document.getElementById('s_run_lthr').value||178,cycLTHR:+document.getElementById('s_cyc_lthr').value||172,ftp:+document.getElementById('s_ftp').value||238};
+  localStorage.setItem('kadell_s',JSON.stringify(S));
+}
+function toggleSettings(){
+  const b=document.getElementById('settingsBody'),c=document.getElementById('settingsChevron');
+  const o=b.classList.toggle('open');c.classList.toggle('open',o);
 }
 
-async function handleCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (!code) return false;
-
-  // Clean URL
-  window.history.replaceState({}, '', window.location.pathname);
-
-  const clientId = localStorage.getItem('strava_client_id');
-  const clientSecret = localStorage.getItem('strava_client_secret');
-
-  if (!clientId || !clientSecret) {
-    showStatus('activityStatus', 'error', 'Credentials missing — please re-enter and authorise again');
-    return false;
+// LT2 auto-estimate
+async function estimateLT2(){
+  const box=document.getElementById('lt2Box');
+  box.classList.remove('hidden');
+  box.textContent='Analysing pace/HR relationship across recent runs…';
+  const hist=D.run.history;
+  const runs=hist.filter(a=>a.average_heartrate&&a.average_speed>0).map(a=>({hr:a.average_heartrate,pace:1000/a.average_speed})).sort((a,b)=>a.pace-b.pace);
+  if(runs.length<5){box.textContent='Need 5+ runs with HR data. Fetch runs first.';return;}
+  let maxR=0,est=0;
+  for(let i=1;i<runs.length-1;i++){
+    const dHR=runs[i].hr-runs[i-1].hr,dP=runs[i-1].pace-runs[i].pace;
+    if(dP>0&&dHR>0){const r=dHR/dP;if(r>maxR){maxR=r;est=runs[i].hr;}}
   }
+  if(est<140||est>200){box.textContent=`Estimate inconclusive (${Math.round(est)} bpm) — run more varied sessions.`;return;}
+  const diff=Math.round(est-S.runLTHR);
+  box.innerHTML=`🔬 Estimated LT2 from ${runs.length} runs: <strong>${Math.round(est)} bpm</strong> (current: ${S.runLTHR} bpm, ${diff>0?'+':''}${diff} bpm)<br>${Math.abs(diff)>5?`<span style="color:var(--accent);cursor:pointer;" onclick="applyLT2(${Math.round(est)})">→ Apply ${Math.round(est)} bpm as Run LTHR</span>`:'Current setting consistent ✓'}`;
+}
+function applyLT2(v){document.getElementById('s_run_lthr').value=v;saveSettings();document.getElementById('lt2Box').innerHTML+=`<br><span style="color:var(--green);">✓ Applied</span>`;}
 
-  state.clientId = clientId;
-  state.clientSecret = clientSecret;
-  document.getElementById('clientId').value = clientId;
-
-  showStatus('activityStatus', 'loading', 'Exchanging auth code for access token…');
-
-  try {
-    const res = await fetch('https://www.strava.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code,
-        grant_type: 'authorization_code'
-      })
-    });
-
-    const data = await res.json();
-    if (data.errors) throw new Error(data.message || 'Auth failed');
-
-    state.accessToken = data.access_token;
-    state.athleteId = data.athlete?.id;
-
-    // Cache token (in real prod you'd handle refresh_token too)
-    localStorage.setItem('strava_access_token', data.access_token);
-    localStorage.setItem('strava_token_expiry', data.expires_at);
-    localStorage.setItem('strava_refresh_token', data.refresh_token);
-
-    setConnected(data.athlete?.firstname || 'Athlete');
-    hideStatus('activityStatus');
-    return true;
-  } catch (e) {
-    showStatus('activityStatus', 'error', `Auth error: ${e.message}`);
-    return false;
-  }
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(t){
+  document.getElementById('runTab').classList.toggle('hidden',t!=='run');
+  document.getElementById('cycTab').classList.toggle('hidden',t!=='cyc');
+  document.getElementById('tabRun').classList.toggle('active',t==='run');
+  document.getElementById('tabCyc').classList.toggle('active',t==='cyc');
+  document.getElementById('tabCyc').classList.toggle('cyc',t==='cyc');
 }
 
-async function refreshTokenIfNeeded() {
-  const expiry = parseInt(localStorage.getItem('strava_token_expiry') || '0');
-  const now = Math.floor(Date.now() / 1000);
-
-  if (now < expiry - 300) {
-    // Token still valid
-    state.accessToken = localStorage.getItem('strava_access_token');
-    return true;
-  }
-
-  const refreshToken = localStorage.getItem('strava_refresh_token');
-  const clientId = localStorage.getItem('strava_client_id');
-  const clientSecret = localStorage.getItem('strava_client_secret');
-
-  if (!refreshToken || !clientId || !clientSecret) return false;
-
-  try {
-    const res = await fetch('https://www.strava.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token'
-      })
-    });
-    const data = await res.json();
-    if (data.errors) return false;
-
-    state.accessToken = data.access_token;
-    localStorage.setItem('strava_access_token', data.access_token);
-    localStorage.setItem('strava_token_expiry', data.expires_at);
-    localStorage.setItem('strava_refresh_token', data.refresh_token);
-    return true;
-  } catch { return false; }
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function initiateAuth(){
+  const ci=document.getElementById('clientId').value.trim(),cs=document.getElementById('clientSecret').value.trim();
+  if(!ci||!cs){showSt('runStatus','error','Enter Client ID and Secret');return;}
+  localStorage.setItem('strava_ci',ci);localStorage.setItem('strava_cs',cs);
+  const ru=window.location.href.split('?')[0].split('#')[0];
+  window.location.href=`https://www.strava.com/oauth/authorize?client_id=${ci}&response_type=code&redirect_uri=${encodeURIComponent(ru)}&approval_prompt=force&scope=read,activity:read_all,activity:write`;
+}
+async function handleCB(){
+  const p=new URLSearchParams(window.location.search),code=p.get('code');
+  if(!code)return false;
+  window.history.replaceState({},'',window.location.pathname);
+  const ci=localStorage.getItem('strava_ci'),cs=localStorage.getItem('strava_cs');
+  if(!ci||!cs)return false;
+  A.clientId=ci;A.clientSecret=cs;
+  document.getElementById('clientId').value=ci;
+  showSt('runStatus','loading','Exchanging auth code…');
+  try{
+    const r=await fetch('https://www.strava.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:ci,client_secret:cs,code,grant_type:'authorization_code'})});
+    const d=await r.json();if(d.errors)throw new Error(d.message||'Auth failed');
+    A.token=d.access_token;
+    localStorage.setItem('strava_at',d.access_token);localStorage.setItem('strava_exp',d.expires_at);localStorage.setItem('strava_rt',d.refresh_token);
+    setConnected(d.athlete?.firstname||'Athlete');hideSt('runStatus');return true;
+  }catch(e){showSt('runStatus','error',`Auth error: ${e.message}`);return false;}
+}
+async function refreshIfNeeded(){
+  const exp=+localStorage.getItem('strava_exp')||0;
+  if(Math.floor(Date.now()/1000)<exp-300){A.token=localStorage.getItem('strava_at');return true;}
+  const rt=localStorage.getItem('strava_rt'),ci=localStorage.getItem('strava_ci'),cs=localStorage.getItem('strava_cs');
+  if(!rt||!ci||!cs)return false;
+  try{
+    const r=await fetch('https://www.strava.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:ci,client_secret:cs,refresh_token:rt,grant_type:'refresh_token'})});
+    const d=await r.json();if(d.errors)return false;
+    A.token=d.access_token;localStorage.setItem('strava_at',d.access_token);localStorage.setItem('strava_exp',d.expires_at);localStorage.setItem('strava_rt',d.refresh_token);return true;
+  }catch{return false;}
+}
+function loadSavedCreds(){const ci=localStorage.getItem('strava_ci');if(ci)document.getElementById('clientId').value=ci;document.getElementById('clientSecret').value='(saved)';}
+function setConnected(n){
+  document.getElementById('connectionBadge').classList.add('connected');
+  document.getElementById('connectionLabel').textContent=`${n} connected`;
+  ['step2Num','cycStep1Num'].forEach(id=>document.getElementById(id).classList.remove('locked'));
+  ['runFetchBtn','cycFetchBtn'].forEach(id=>document.getElementById(id).disabled=false);
 }
 
-function loadSavedCredentials() {
-  const clientId = localStorage.getItem('strava_client_id');
-  const clientSecret = localStorage.getItem('strava_client_secret');
-  if (clientId) document.getElementById('clientId').value = clientId;
-  if (clientSecret) document.getElementById('clientSecret').value = '(saved)';
+// ══════════════════════════════════════════════
+// FETCH
+// ══════════════════════════════════════════════
+const RUN_TYPES=['Run','TrailRun','VirtualRun'];
+const CYC_TYPES=['Ride','VirtualRide','EBikeRide','MountainBikeRide'];
+
+async function fetchActs(t){
+  const ok=await refreshIfNeeded();
+  const sid=t==='run'?'runStatus':'cycStatus';
+  if(!ok||!A.token){showSt(sid,'error','Not authenticated');return;}
+  showSt(sid,'loading',`Fetching recent ${t==='run'?'runs':'rides'}…`);
+  try{
+    const r=await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=40',{headers:{Authorization:`Bearer ${A.token}`}});
+    if(!r.ok)throw new Error(`Strava ${r.status}`);
+    const all=await r.json();
+    const types=t==='run'?RUN_TYPES:CYC_TYPES;
+    const fil=all.filter(a=>types.includes(a.type)||types.includes(a.sport_type)).slice(0,10);
+    if(!fil.length){showSt(sid,'error',`No ${t==='run'?'runs':'rides'} found`);return;}
+    D[t].acts=fil;hideSt(sid);renderList(t);fetchHistory(t);
+  }catch(e){showSt(sid,'error',`Error: ${e.message}`);}
 }
 
-function setConnected(name) {
-  const badge = document.getElementById('connectionBadge');
-  badge.classList.add('connected');
-  document.getElementById('connectionLabel').textContent = `${name} connected`;
-  document.getElementById('step2Num').classList.remove('locked');
-  document.getElementById('fetchBtn').disabled = false;
-}
-
-// ─────────────────────────────────────────────
-// Fetch activities
-// ─────────────────────────────────────────────
-async function fetchActivities() {
-  const valid = await refreshTokenIfNeeded();
-  if (!valid || !state.accessToken) {
-    showStatus('activityStatus', 'error', 'Not authenticated. Please authorise with Strava first.');
-    return;
-  }
-
-  showStatus('activityStatus', 'loading', 'Fetching your recent runs…');
-
-  try {
-    // Fetch last 30 activities, filter runs
-    const res = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=30', {
-      headers: { Authorization: `Bearer ${state.accessToken}` }
-    });
-
-    if (!res.ok) throw new Error(`Strava API error: ${res.status}`);
-    const all = await res.json();
-    state.activities = all.filter(a => a.type === 'Run' || a.sport_type === 'Run').slice(0, 10);
-
-    if (!state.activities.length) {
-      showStatus('activityStatus', 'error', 'No runs found in recent activities.');
-      return;
-    }
-
-    hideStatus('activityStatus');
-    renderActivityList();
-    setConnected(state.activities[0]?.athlete?.firstname || 'Athlete');
-
-  } catch (e) {
-    showStatus('activityStatus', 'error', `Error: ${e.message}`);
-  }
-}
-
-function renderActivityList() {
-  const list = document.getElementById('activityList');
-
-  // Also fetch history for last 28 days for load calc
-  fetchHistoryInBackground();
-
-  list.innerHTML = state.activities.map((a, i) => {
-    const km = (a.distance / 1000).toFixed(1);
-    const pace = a.moving_time && a.distance ? fmtPace(a.moving_time / (a.distance / 1000)) : '--';
-    const duration = fmtDuration(a.moving_time);
-    const date = new Date(a.start_date_local).toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
-    const hr = a.average_heartrate ? Math.round(a.average_heartrate) + ' bpm' : '--';
-
-    return `
-      <div class="activity-card" id="act-${i}" onclick="selectActivity(${i})">
-        <div class="act-top">
-          <div class="act-name">${a.name}</div>
-          <div class="act-date">${date}</div>
-        </div>
-        <div class="act-stats">
-          <div class="act-stat"><div class="val">${km} km</div><div class="lbl">Distance</div></div>
-          <div class="act-stat"><div class="val">${duration}</div><div class="lbl">Duration</div></div>
-          <div class="act-stat"><div class="val">${pace}/km</div><div class="lbl">Avg Pace</div></div>
-          <div class="act-stat"><div class="val">${hr}</div><div class="lbl">Avg HR</div></div>
-        </div>
-      </div>
-    `;
+function renderList(t){
+  const el=document.getElementById(t==='run'?'runList':'cycList');
+  el.innerHTML=D[t].acts.map((a,i)=>{
+    const km=(a.distance/1000).toFixed(1),dur=fmtDur(a.moving_time);
+    const date=new Date(a.start_date_local).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+    const hr=a.average_heartrate?Math.round(a.average_heartrate)+' bpm':'--';
+    const extra=t==='cyc'
+      ?`<div class="act-stat"><div class="val">${a.average_watts?Math.round(a.average_watts)+'w':'--'}</div><div class="lbl">Avg Power</div></div><div class="act-stat"><div class="val">${a.total_elevation_gain?Math.round(a.total_elevation_gain)+'m':'--'}</div><div class="lbl">Elevation</div></div>`
+      :`<div class="act-stat"><div class="val">${a.moving_time&&a.distance?fmtPace(a.moving_time/(a.distance/1000))+'\/km':'--'}</div><div class="lbl">Avg Pace</div></div>`;
+    return `<div class="activity-card ${t==='cyc'?'cyc-card':''}" id="${t}-a-${i}" onclick="selectAct('${t}',${i})">
+      <div class="act-top"><div class="act-name">${a.name}</div><div class="act-date">${date}</div></div>
+      <div class="act-stats">
+        <div class="act-stat"><div class="val">${km} km</div><div class="lbl">Distance</div></div>
+        <div class="act-stat"><div class="val">${dur}</div><div class="lbl">Duration</div></div>
+        ${extra}
+        <div class="act-stat"><div class="val">${hr}</div><div class="lbl">Avg HR</div></div>
+      </div></div>`;
   }).join('');
-
-  document.getElementById('analyseBtn').disabled = true;
+  document.getElementById(t==='run'?'runAnalyseBtn':'cycAnalyseBtn').disabled=true;
 }
 
-let historyActivities = [];
-
-async function fetchHistoryInBackground() {
-  // Fetch last 28 days for load calcs
-  const after = Math.floor((Date.now() - 28 * 86400000) / 1000);
-  try {
-    const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&after=${after}`, {
-      headers: { Authorization: `Bearer ${state.accessToken}` }
-    });
-    if (!res.ok) return;
-    const all = await res.json();
-    historyActivities = all.filter(a => a.type === 'Run' || a.sport_type === 'Run');
-  } catch {}
+async function fetchHistory(t){
+  const after=Math.floor((Date.now()-28*86400000)/1000);
+  const types=t==='run'?RUN_TYPES:CYC_TYPES;
+  try{
+    const r=await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&after=${after}`,{headers:{Authorization:`Bearer ${A.token}`}});
+    if(!r.ok)return;const all=await r.json();
+    D[t].history=all.filter(a=>types.includes(a.type)||types.includes(a.sport_type));
+  }catch{}
 }
 
-function selectActivity(index) {
-  document.querySelectorAll('.activity-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById(`act-${index}`).classList.add('selected');
-  state.selectedActivity = state.activities[index];
-  document.getElementById('analyseBtn').disabled = false;
+function selectAct(t,i){
+  D[t].acts.forEach((_,j)=>{const e=document.getElementById(`${t}-a-${j}`);if(e)e.classList.remove('selected');});
+  document.getElementById(`${t}-a-${i}`).classList.add('selected');
+  D[t].selected=D[t].acts[i];
+  document.getElementById(t==='run'?'runAnalyseBtn':'cycAnalyseBtn').disabled=false;
 }
 
-// ─────────────────────────────────────────────
-// Analysis
-// ─────────────────────────────────────────────
-async function analyseSelected() {
-  if (!state.selectedActivity) return;
+// ══════════════════════════════════════════════
+// ANALYSIS HELPERS
+// ══════════════════════════════════════════════
+function weekStart(){const n=new Date(),w=new Date(n);w.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1));w.setHours(0,0,0,0);return w;}
 
-  const act = state.selectedActivity;
+function weeklyKmStats(hist){
+  const ws=weekStart();
+  const thisWk=hist.filter(a=>new Date(a.start_date_local)>=ws).reduce((s,a)=>s+a.distance/1000,0);
+  const wks=[0,1,2,3].map(w=>{
+    const we=new Date(ws.getTime()-w*7*86400000),ws2=new Date(we.getTime()-7*86400000);
+    return hist.filter(a=>{const d=new Date(a.start_date_local);return d>=ws2&&d<we;}).reduce((s,a)=>s+a.distance/1000,0);
+  });
+  return{thisWk,wks,avg28:hist.reduce((s,a)=>s+a.distance/1000,0)/4,ws};
+}
 
-  showStatus('activityStatus', 'loading', 'Loading detailed stats for this run…');
+function hrTSS(avgHR,sec,lthr){const IF=Math.min(avgHR/lthr,1);return{tss:Math.round((sec/3600)*IF*IF*100),IF};}
+function powerTSS(np,avgW,sec,ftp){const p=np||avgW||0,IF=p/ftp;return{tss:Math.round((sec/3600)*IF*IF*100),IF,powered:true};}
 
-  let detail = act;
-  let rawZones = null;
-  let hadRealZones = false;
+function acwr(hist,lthr){
+  const allTSS=hist.map(a=>{const{tss}=hrTSS(a.average_heartrate||150,a.moving_time||0,lthr);return tss;});
+  const ctl=allTSS.reduce((s,v)=>s+v,0)/28;
+  const ago7=new Date(Date.now()-7*86400000);
+  const atl=hist.filter(a=>new Date(a.start_date_local)>=ago7).reduce((s,a)=>{const{tss}=hrTSS(a.average_heartrate||150,a.moving_time||0,lthr);return s+tss;},0)/7;
+  return{ctl,atl,ratio:ctl>0?atl/ctl:null};
+}
 
-  try {
-    const [detRes, zoneRes] = await Promise.all([
-      fetch(`https://www.strava.com/api/v3/activities/${act.id}`, {
-        headers: { Authorization: `Bearer ${state.accessToken}` }
-      }),
-      fetch(`https://www.strava.com/api/v3/activities/${act.id}/zones`, {
-        headers: { Authorization: `Bearer ${state.accessToken}` }
-      })
+function hrZones(avgHR,sec,lthr,hadReal,raw){
+  const HRR=S.hrMax-S.hrRest;
+  const bounds=[S.hrRest+0.60*HRR,S.hrRest+0.70*HRR,S.hrRest+0.80*HRR,lthr,S.hrMax];
+  let zs=[0,0,0,0,0];
+  if(hadReal&&raw?.distribution_buckets){
+    zs=raw.distribution_buckets.map(b=>b.time||0);
+    while(zs.length<5)zs.push(0);zs=zs.slice(0,5);
+  } else if(sec>0&&avgHR>0){
+    const sd=10;
+    function np(x){return Math.exp(-0.5*((x-avgHR)/sd)**2)/(sd*Math.sqrt(2*Math.PI));}
+    const bl=[S.hrRest,...bounds];
+    const w=[];
+    for(let i=0;i<5;i++){let s=0;const lo=bl[i],hi=bl[i+1],st=(hi-lo)/20;for(let x=lo+st/2;x<hi;x+=st)s+=np(x)*st;w.push(s);}
+    const tw=w.reduce((s,v)=>s+v,0)||1;
+    zs=w.map(v=>(v/tw)*sec);
+  }
+  const tot=zs.reduce((s,v)=>s+v,0)||1;
+  const pcts=zs.map(v=>v/tot);
+  return{zs,pcts,dom:pcts.indexOf(Math.max(...pcts)),hadReal};
+}
+
+// ══════════════════════════════════════════════
+// WEATHER
+// ══════════════════════════════════════════════
+async function getWeather(lat,lng,ut){
+  try{
+    const d=new Date(ut*1000),ds=d.toISOString().split('T')[0],hr=d.getUTCHours();
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,apparent_temperature,windspeed_10m,relativehumidity_2m,precipitation&start_date=${ds}&end_date=${ds}&timezone=auto`);
+    if(!r.ok)return null;const data=await r.json();const h=data.hourly;const i=Math.min(hr,(h.time?.length||1)-1);
+    return{temp:h.temperature_2m?.[i],feels:h.apparent_temperature?.[i],wind:h.windspeed_10m?.[i],hum:h.relativehumidity_2m?.[i],rain:h.precipitation?.[i]};
+  }catch{return null;}
+}
+function wxPenalty(w){
+  if(!w)return 0;let p=0;const t=w.feels??w.temp??15;
+  if(t>15)p+=Math.round((t-15)/5*6);if(t<5)p-=Math.round((5-t)/5*3);
+  if((w.hum||0)>70)p+=3;if((w.wind||0)>20)p+=4;if((w.rain||0)>1)p+=2;
+  return p;
+}
+
+// ══════════════════════════════════════════════
+// ANALYSE
+// ══════════════════════════════════════════════
+async function doAnalyse(t){
+  if(t==='run')await analyseRun();else await analyseCyc();
+}
+
+async function analyseRun(){
+  const act=D.run.selected;showSt('runStatus','loading','Loading run details…');
+  let det=act,rawZ=null,hadZ=false;
+  try{
+    const[dr,zr]=await Promise.all([
+      fetch(`https://www.strava.com/api/v3/activities/${act.id}`,{headers:{Authorization:`Bearer ${A.token}`}}),
+      fetch(`https://www.strava.com/api/v3/activities/${act.id}/zones`,{headers:{Authorization:`Bearer ${A.token}`}})
     ]);
+    if(dr.ok)det=await dr.json();
+    if(zr.ok){const zd=await zr.json();rawZ=zd.find(z=>z.type==='heartrate');if(rawZ?.distribution_buckets?.some(b=>b.time>0))hadZ=true;}
+  }catch(e){console.warn(e);}
+  hideSt('runStatus');
 
-    if (detRes.ok) detail = await detRes.json();
-    if (zoneRes.ok) {
-      const zData = await zoneRes.json();
-      rawZones = zData.find(z => z.type === 'heartrate');
-      if (rawZones && rawZones.distribution_buckets && rawZones.distribution_buckets.some(b => b.time > 0)) {
-        hadRealZones = true;
-      }
-    }
-  } catch(e) { console.warn('Fetch error:', e); }
-
-  hideStatus('activityStatus');
-
-  // ── Compute metrics ──
-  const kmThis = detail.distance / 1000;
-
-  // Weekly km (this week Mon–Sun)
-  const nowD = new Date();
-  const weekStart = new Date(nowD);
-  weekStart.setDate(nowD.getDate() - nowD.getDay() + (nowD.getDay() === 0 ? -6 : 1));
-  weekStart.setHours(0,0,0,0);
-
-  const thisWeekKm = historyActivities
-    .filter(a => new Date(a.start_date_local) >= weekStart)
-    .reduce((s, a) => s + a.distance / 1000, 0);
-
-  const weeklyKms = [0,1,2,3].map(w => {
-    const wEnd = new Date(weekStart.getTime() - w * 7 * 86400000);
-    const wStart2 = new Date(wEnd.getTime() - 7 * 86400000);
-    return historyActivities
-      .filter(a => { const d = new Date(a.start_date_local); return d >= wStart2 && d < wEnd; })
-      .reduce((s, a) => s + a.distance / 1000, 0);
-  });
-
-  const rollingAvg28 = historyActivities.reduce((s, a) => s + a.distance / 1000, 0) / 4;
-
-  // Use actual max HR from activity if available, otherwise 185 as sensible default
-  const hrMax = detail.max_heartrate || 185;
-  const avgHR = detail.average_heartrate || 150;
-  const movingSec = detail.moving_time || 0;
-  const intensityFactor = Math.min(avgHR / hrMax, 1);
-  const tss = Math.round((movingSec / 3600) * intensityFactor * intensityFactor * 100);
-
-  const allTSS = historyActivities.map(a => {
-    const hr = a.average_heartrate || 150;
-    const maxHr = a.max_heartrate || hrMax;
-    const sec = a.moving_time || 0;
-    const IF2 = Math.min(hr / maxHr, 1);
-    return (sec / 3600) * IF2 * IF2 * 100;
-  });
-
-  const ctl28 = allTSS.length ? allTSS.reduce((s,v) => s+v, 0) / 28 : 0;
-  const atl7 = allTSS.slice(0,7).reduce((s,v) => s+v, 0) / Math.min(7, allTSS.length || 1);
-  const acwr = ctl28 > 0 ? (atl7 / ctl28) : null;
-
-  // HR zones
-  let zoneSeconds = [0, 0, 0, 0, 0];
-  if (hadRealZones && rawZones.distribution_buckets) {
-    zoneSeconds = rawZones.distribution_buckets.map(b => b.time || 0);
-    while (zoneSeconds.length < 5) zoneSeconds.push(0);
-    zoneSeconds = zoneSeconds.slice(0, 5);
-  } else if (movingSec > 0) {
-    const pct = intensityFactor;
-    if (pct < 0.6)      zoneSeconds = [movingSec*0.80, movingSec*0.15, movingSec*0.04, movingSec*0.01, 0];
-    else if (pct < 0.7) zoneSeconds = [movingSec*0.10, movingSec*0.65, movingSec*0.20, movingSec*0.04, movingSec*0.01];
-    else if (pct < 0.8) zoneSeconds = [movingSec*0.05, movingSec*0.30, movingSec*0.50, movingSec*0.12, movingSec*0.03];
-    else if (pct < 0.9) zoneSeconds = [movingSec*0.02, movingSec*0.10, movingSec*0.30, movingSec*0.50, movingSec*0.08];
-    else                zoneSeconds = [movingSec*0.01, movingSec*0.05, movingSec*0.10, movingSec*0.20, movingSec*0.64];
-  }
-
-  const totalZoneSec = zoneSeconds.reduce((s,v) => s+v, 0) || 1;
-  const zonePcts = zoneSeconds.map(s => s / totalZoneSec);
-  const dominantZone = zonePcts.indexOf(Math.max(...zonePcts));
-
-  state.analysisData = {
-    act: detail,
-    kmThis,
-    thisWeekKm,
-    weeklyKms,
-    rollingAvg28,
-    tss,
-    ctl28,
-    atl7,
-    acwr,
-    zoneSeconds,
-    zonePcts,
-    dominantZone,
-    intensityFactor,
-    hadRealZones,
-    weather: null,
-    weeklyPaces: null
-  };
-
-  // ── Pace trend: this week vs last week avg pace ──
-  const thisWeekRuns = historyActivities.filter(a => new Date(a.start_date_local) >= weekStart && a.average_speed > 0);
-  const lastWeekStart = new Date(weekStart.getTime() - 7 * 86400000);
-  const lastWeekRuns = historyActivities.filter(a => {
-    const d = new Date(a.start_date_local);
-    return d >= lastWeekStart && d < weekStart && a.average_speed > 0;
-  });
-
-  const avgPaceThisWeek = thisWeekRuns.length
-    ? thisWeekRuns.reduce((s, a) => s + (1000 / a.average_speed), 0) / thisWeekRuns.length
-    : null;
-  const avgPaceLastWeek = lastWeekRuns.length
-    ? lastWeekRuns.reduce((s, a) => s + (1000 / a.average_speed), 0) / lastWeekRuns.length
-    : null;
-
-  state.analysisData.avgPaceThisWeek = avgPaceThisWeek;
-  state.analysisData.avgPaceLastWeek = avgPaceLastWeek;
-
-  renderResults();
-
-  // ── Fetch weather in background using activity GPS coords ──
-  const lat = detail.start_latlng?.[0];
-  const lng = detail.start_latlng?.[1];
-  const activityTime = Math.floor(new Date(detail.start_date).getTime() / 1000);
-
-  if (lat && lng) {
-    fetchWeather(lat, lng, activityTime).then(w => {
-      state.analysisData.weather = w;
-      renderWeatherPace();
-      renderCaption();
-    });
-  } else {
-    renderWeatherPace();
-  }
-}
-
-function renderResults() {
-  const d = state.analysisData;
-  const act = d.act;
-
-  document.getElementById('resultsPanel').classList.remove('hidden');
-  document.getElementById('step3Num').classList.add('done');
-  document.getElementById('resultsPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // ── KM Metrics ──
-  const weekDiff = d.rollingAvg28 > 0 ? ((d.thisWeekKm - d.rollingAvg28) / d.rollingAvg28 * 100) : 0;
-  const weekColor = weekDiff > 10 ? 'yellow' : weekDiff < -20 ? 'blue' : 'green';
-  const weekTag = weekDiff > 10 ? 'tag-caution' : weekDiff < -20 ? 'tag-low' : 'tag-optimal';
-
-  document.getElementById('kmMetrics').innerHTML = `
-    <div class="metric-card ${weekColor}">
-      <div class="metric-label">This Week</div>
-      <div class="metric-value">${d.thisWeekKm.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div>
-      <div class="metric-sub">vs ${d.rollingAvg28.toFixed(1)} km avg <span class="tag ${weekTag}">${weekDiff>0?'+':''}${weekDiff.toFixed(0)}%</span></div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">28-Day Avg/Week</div>
-      <div class="metric-value">${d.rollingAvg28.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div>
-      <div class="metric-sub">Chronic load baseline</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">This Run</div>
-      <div class="metric-value">${d.kmThis.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div>
-      <div class="metric-sub">${fmtDuration(act.moving_time)} · ${fmtPace(act.moving_time/(act.distance/1000))}/km</div>
-    </div>
-  `;
-
-  // Mini bar chart
-  const allWeeks = [d.thisWeekKm, ...d.weeklyKms];
-  const maxKm = Math.max(...allWeeks, d.rollingAvg28, 1);
-  const labels = ['This wk', '-1 wk', '-2 wk', '-3 wk', '-4 wk'];
-  document.getElementById('kmChart').innerHTML = `
-    <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">Weekly km — last 4 weeks</div>
-    <div class="km-chart">
-      ${allWeeks.map((km, i) => `
-        <div class="km-bar-wrap">
-          <div class="km-bar" style="height:${(km/maxKm)*100}%;background:${i===0?'var(--accent)':'var(--surface2)'};border:1px solid ${i===0?'var(--accent)':'var(--border)'};"></div>
-          <div class="km-bar-label">${labels[i]}</div>
-        </div>
-      `).join('')}
-      <div class="km-bar-wrap" style="opacity:0.5;">
-        <div class="km-bar" style="height:${(d.rollingAvg28/maxKm)*100}%;background:var(--green);border:1px solid var(--green);"></div>
-        <div class="km-bar-label">Avg</div>
-      </div>
-    </div>
-  `;
-
-  // ── TSS Metrics ──
-  let acwrColor = 'green', acwrTag = 'tag-optimal', acwrLabel = 'Optimal', acwrDesc = 'Load progression is well-managed. Good adaptation stimulus.';
-  if (d.acwr !== null) {
-    if (d.acwr < 0.8) { acwrColor = 'blue'; acwrTag = 'tag-low'; acwrLabel = 'Low Load'; acwrDesc = 'Acute load is below chronic. Safe to increase this week.'; }
-    else if (d.acwr > 1.3) { acwrColor = 'yellow'; acwrTag = 'tag-caution'; acwrLabel = 'High Load'; acwrDesc = 'Spike detected. High injury risk — consider an easy day.'; }
-    else if (d.acwr > 1.5) { acwrColor = 'high'; acwrTag = 'tag-high'; acwrLabel = 'Danger Zone'; acwrDesc = 'Acute:Chronic > 1.5. Rest or reduce significantly.'; }
-  }
-
-  const acwrVal = d.acwr !== null ? d.acwr.toFixed(2) : 'N/A';
-  const gaugeColor = acwrColor === 'green' ? '#22c55e' : acwrColor === 'blue' ? '#3b82f6' : acwrColor === 'yellow' ? '#f59e0b' : '#ef4444';
-  const gaugePct = d.acwr !== null ? Math.min(d.acwr / 2, 1) : 0.5;
-  const circumference = 2 * Math.PI * 30;
-  const dash = gaugePct * circumference;
-
-  document.getElementById('tssMetrics').innerHTML = `
-    <div class="metric-card">
-      <div class="metric-label">Run TSS</div>
-      <div class="metric-value">${d.tss}<span style="font-size:0.8rem;color:var(--muted)"> pts</span></div>
-      <div class="metric-sub">Intensity factor: ${(d.intensityFactor*100).toFixed(0)}%</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">CTL (Fitness)</div>
-      <div class="metric-value">${d.ctl28.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> TSS/d</span></div>
-      <div class="metric-sub">28-day chronic load</div>
-    </div>
-    <div class="metric-card ${acwrColor}">
-      <div class="metric-label">ACWR</div>
-      <div class="acwr-display">
-        <div class="acwr-gauge">
-          <svg width="80" height="80" viewBox="0 0 80 80">
-            <circle cx="40" cy="40" r="30" fill="none" stroke="var(--border)" stroke-width="6"/>
-            <circle cx="40" cy="40" r="30" fill="none" stroke="${gaugeColor}" stroke-width="6"
-              stroke-dasharray="${dash} ${circumference}" stroke-linecap="round"/>
-          </svg>
-          <div class="acwr-text" style="color:${gaugeColor}">${acwrVal}</div>
-        </div>
-        <div class="acwr-info">
-          <div class="status"><span class="tag ${acwrTag}">${acwrLabel}</span></div>
-          <div class="desc" style="margin-top:6px;">${acwrDesc}</div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // ── HR Zones ──
-  const totalMin = d.zoneSeconds.reduce((s,v)=>s+v, 0) / 60;
-  document.getElementById('hrZones').innerHTML = `
-    <div class="zone-bar">
-      ${d.zonePcts.map((p, i) => `
-        <div class="zone-seg" style="width:${p*100}%;background:${ZONES[i].color};min-width:${p>0?'2px':'0'}"></div>
-      `).join('')}
-    </div>
-    <div class="zone-legend">
-      ${ZONES.map((z, i) => `
-        <div class="zone-item">
-          <div class="zone-dot" style="background:${z.color}"></div>
-          ${z.label}: ${(d.zonePcts[i]*100).toFixed(0)}% (${Math.round(d.zoneSeconds[i]/60)}min)
-        </div>
-      `).join('')}
-    </div>
-    <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:8px;">
-      ${d.act.average_heartrate ? `Avg HR: ${Math.round(d.act.average_heartrate)} bpm · ` : ''}
-      ${d.act.max_heartrate ? `Max HR: ${Math.round(d.act.max_heartrate)} bpm · ` : ''}
-      Dominant: ${ZONES[d.dominantZone].label}
-      ${!d.hadRealZones ? ' · (estimated from avg HR — connect HR monitor for exact zones)' : ''}
-    </div>
-  `;
-
-  // ── Caption ──
-  renderWeatherPace();
-  renderCaption();
-}
-
-// ─────────────────────────────────────────────
-// Weather
-// ─────────────────────────────────────────────
-async function fetchWeather(lat, lng, unixTime) {
-  try {
-    // Open-Meteo: free, no API key, historical weather by hour
-    const date = new Date(unixTime * 1000);
-    const dateStr = date.toISOString().split('T')[0];
-    const hour = date.getUTCHours();
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,apparent_temperature,windspeed_10m,relativehumidity_2m,precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-
-    const h = data.hourly;
-    const idx = Math.min(hour, (h.time?.length || 1) - 1);
-
-    return {
-      temp: h.temperature_2m?.[idx],
-      feelsLike: h.apparent_temperature?.[idx],
-      wind: h.windspeed_10m?.[idx],
-      humidity: h.relativehumidity_2m?.[idx],
-      precip: h.precipitation?.[idx],
-      location: `${lat.toFixed(2)}, ${lng.toFixed(2)}`
-    };
-  } catch(e) {
-    console.warn('Weather fetch failed:', e);
-    return null;
-  }
-}
-
-// Weather-adjusted pace penalty formula:
-// Each 5°C above 15°C adds ~6 sec/km, humidity >70% adds ~3 sec/km
-// Wind >20km/h adds ~4 sec/km. Heat index uses feels-like.
-function calcWeatherPenalty(weather) {
-  if (!weather) return 0;
-  let penalty = 0;
-  const temp = weather.feelsLike ?? weather.temp ?? 15;
-  if (temp > 15) penalty += Math.round((temp - 15) / 5 * 6);
-  if (temp < 5)  penalty -= Math.round((5 - temp) / 5 * 3); // cold bonus (minimal)
-  if ((weather.humidity || 0) > 70) penalty += 3;
-  if ((weather.wind || 0) > 20) penalty += 4;
-  if ((weather.precip || 0) > 1) penalty += 2;
-  return penalty;
-}
-
-function renderWeatherPace() {
-  const d = state.analysisData;
-  const w = d.weather;
-  const act = d.act;
-  const el = document.getElementById('weatherPace');
-
-  const actualPaceSec = act.moving_time / (act.distance / 1000);
-  const penalty = calcWeatherPenalty(w);
-  const adjustedPaceSec = actualPaceSec - penalty;
+  const avgHR=det.average_heartrate||150,sec=det.moving_time||0,km=det.distance/1000;
+  const{thisWk,wks,avg28,ws}=weeklyKmStats(D.run.history);
+  const{tss,IF}=hrTSS(avgHR,sec,S.runLTHR);
+  const{ctl,atl,ratio}=acwr(D.run.history,S.runLTHR);
+  const zones=hrZones(avgHR,sec,S.runLTHR,hadZ,rawZ);
 
   // Pace trend
-  const paceThisStr = d.avgPaceThisWeek ? fmtPace(d.avgPaceThisWeek) : '--';
-  const paceLastStr = d.avgPaceLastWeek ? fmtPace(d.avgPaceLastWeek) : '--';
-  let paceTrendLabel = 'Insufficient data';
-  let paceTrendColor = 'var(--muted)';
-  if (d.avgPaceThisWeek && d.avgPaceLastWeek) {
-    const diff = d.avgPaceLastWeek - d.avgPaceThisWeek; // positive = faster this week
-    const absDiff = Math.abs(diff);
-    if (diff > 5) { paceTrendLabel = `↑ ${Math.round(absDiff)}s/km faster this week`; paceTrendColor = 'var(--green)'; }
-    else if (diff < -5) { paceTrendLabel = `↓ ${Math.round(absDiff)}s/km slower this week`; paceTrendColor = '#ef4444'; }
-    else { paceTrendLabel = 'Pace consistent week-on-week'; paceTrendColor = 'var(--yellow)'; }
-  }
+  const thisWkRuns=D.run.history.filter(a=>new Date(a.start_date_local)>=ws&&a.average_speed>0);
+  const lwStart=new Date(ws.getTime()-7*86400000);
+  const lwRuns=D.run.history.filter(a=>{const d=new Date(a.start_date_local);return d>=lwStart&&d<ws&&a.average_speed>0;});
+  const paceThis=thisWkRuns.length?thisWkRuns.reduce((s,a)=>s+(1000/a.average_speed),0)/thisWkRuns.length:null;
+  const paceLast=lwRuns.length?lwRuns.reduce((s,a)=>s+(1000/a.average_speed),0)/lwRuns.length:null;
 
-  const weatherHtml = w ? `
-    <div class="metric-card blue" style="grid-column: span 2;">
-      <div class="metric-label">Conditions at Run Start · GPS Auto-detected</div>
-      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:8px;">
-        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.temp?.toFixed(1) ?? '--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Temp</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.feelsLike?.toFixed(1) ?? '--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Feels like</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.humidity ?? '--'}%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Humidity</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.wind?.toFixed(0) ?? '--'} km/h</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Wind</div></div>
-        ${w.precip > 0 ? `<div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:500;">${w.precip?.toFixed(1)}mm</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Rain</div></div>` : ''}
-      </div>
-      ${penalty !== 0 ? `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--accent2);margin-top:10px;">
-        Weather penalty: +${penalty}s/km · Adjusted pace: <strong>${fmtPace(adjustedPaceSec)}/km</strong> (vs actual ${fmtPace(actualPaceSec)}/km)
-      </div>` : `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--green);margin-top:10px;">Ideal conditions — no pace adjustment needed</div>`}
-    </div>
-  ` : `
-    <div class="metric-card" style="grid-column: span 2;">
-      <div class="metric-label">Weather</div>
-      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-top:6px;">
-        ${act.start_latlng ? 'Fetching weather data…' : 'No GPS coordinates in this activity — weather unavailable'}
-      </div>
-    </div>
-  `;
+  D.run.analysis={det,km,thisWk,wks,avg28,tss,IF,ctl,atl,ratio,...zones,paceThis,paceLast,wx:null,captionText:''};
+  renderRunResults();
 
-  el.innerHTML = `
-    <div class="metrics-grid" style="margin-bottom:0;">
-      <div class="metric-card">
-        <div class="metric-label">This Week Avg Pace</div>
-        <div class="metric-value" style="font-size:1.3rem;">${paceThisStr}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div>
-        <div class="metric-sub" style="color:${paceTrendColor};">${paceTrendLabel}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Last Week Avg Pace</div>
-        <div class="metric-value" style="font-size:1.3rem;">${paceLastStr}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div>
-        <div class="metric-sub">Prior 7-day average</div>
-      </div>
-      ${weatherHtml}
-    </div>
-  `;
-}
-
-function renderCaption() {
-  const d = state.analysisData;
-  const act = d.act;
-  const existingCaption = act.description ? act.description.trim() : '';
-
-  // Strip any previous KadellThePhysio Data block to avoid duplicates
-  const stripped = existingCaption.replace(/\n*📊 KADELLTHEPHYSIO DATA[\s\S]*$/, '').trim();
-
-  const weekDiff = d.rollingAvg28 > 0 ? ((d.thisWeekKm - d.rollingAvg28) / d.rollingAvg28 * 100) : 0;
-  const acwrStr = d.acwr !== null ? d.acwr.toFixed(2) : 'N/A';
-
-  let acwrStatus = '✅ Optimal load range';
-  if (d.acwr !== null) {
-    if (d.acwr < 0.8) acwrStatus = '🔵 Below baseline — safe to build';
-    else if (d.acwr > 1.5) acwrStatus = '🔴 Danger zone — rest needed';
-    else if (d.acwr > 1.3) acwrStatus = '⚡ High load — monitor carefully';
-    else acwrStatus = '✅ Optimal load range';
-  }
-
-  const dominantZonePct = (d.zonePcts[d.dominantZone] * 100).toFixed(0);
-  const z2Pct = (d.zonePcts[1] * 100).toFixed(0);
-
-  // Pace trend line
-  let paceLine = '';
-  if (d.avgPaceThisWeek && d.avgPaceLastWeek) {
-    const diff = d.avgPaceLastWeek - d.avgPaceThisWeek;
-    const absDiff = Math.round(Math.abs(diff));
-    if (diff > 5) paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · ↑ ${absDiff}s/km faster than last wk`;
-    else if (diff < -5) paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · ↓ ${absDiff}s/km slower than last wk`;
-    else paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this wk · consistent with last wk`;
-  } else if (d.avgPaceThisWeek) {
-    paceLine = `🏃 Pace: ${fmtPace(d.avgPaceThisWeek)}/km avg this week`;
-  }
-
-  // Weather line
-  let weatherLine = '';
-  const w = d.weather;
-  if (w) {
-    const penalty = calcWeatherPenalty(w);
-    const actualPaceSec = act.moving_time / (act.distance / 1000);
-    const adjustedPaceSec = actualPaceSec - penalty;
-    const conditionStr = `${w.temp?.toFixed(0)}°C feels ${w.feelsLike?.toFixed(0)}°C · ${w.humidity}% humidity · ${w.wind?.toFixed(0)}km/h wind`;
-    if (penalty > 0) {
-      weatherLine = `🌡️ ${conditionStr}\n   Weather-adjusted pace: ${fmtPace(adjustedPaceSec)}/km (+${penalty}s/km penalty)`;
-    } else {
-      weatherLine = `🌡️ ${conditionStr} · Ideal conditions`;
-    }
-  }
-
-  const lines = [
-    `\n\n📊 KADELLTHEPHYSIO DATA`,
-    `─────────────────────────`,
-    `📅 Weekly km: ${d.thisWeekKm.toFixed(1)} km (${weekDiff>0?'+':''}${weekDiff.toFixed(0)}% vs ${d.rollingAvg28.toFixed(1)} km avg)`,
-    paceLine,
-    weatherLine,
-    `💓 HR Zones: ${dominantZonePct}% ${ZONES[d.dominantZone].label} · Z2: ${z2Pct}%`,
-    `⚡ TSS: ${d.tss} pts · CTL: ${d.ctl28.toFixed(1)} TSS/day`,
-    `📈 ACWR: ${acwrStr} — ${acwrStatus}`,
-    `─────────────────────────`,
-    `KadellThePhysio Data`
-  ].filter(Boolean).join('\n');
-
-  const preview = document.getElementById('captionPreview');
-  if (stripped) {
-    preview.innerHTML = `<span style="color:var(--muted)">${escHtml(stripped)}</span><span class="new-content">${escHtml(lines)}</span>`;
-  } else {
-    preview.innerHTML = `<span class="new-content">${escHtml(lines)}</span>`;
-  }
-
-  state.captionText = (stripped ? stripped + lines : lines);
-}
-
-// ─────────────────────────────────────────────
-// Update Strava
-// ─────────────────────────────────────────────
-async function updateStrava() {
-  const btn = document.getElementById('updateBtn');
-  btn.disabled = true;
-  showStatus('updateStatus', 'loading', 'Updating Strava activity description…');
-
-  try {
-    const res = await fetch(`https://www.strava.com/api/v3/activities/${state.selectedActivity.id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${state.accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ description: state.captionText })
+  const lat=det.start_latlng?.[0],lng=det.start_latlng?.[1];
+  if(lat&&lng){
+    getWeather(lat,lng,Math.floor(new Date(det.start_date).getTime()/1000)).then(w=>{
+      D.run.analysis.wx=w;renderRunPaceWeather();buildRunCaption();
     });
+  }
+}
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || `HTTP ${res.status}`);
+function renderRunResults(){
+  document.getElementById('runResults').classList.remove('hidden');
+  document.getElementById('runResults').scrollIntoView({behavior:'smooth',block:'start'});
+  const d=D.run.analysis;
+  renderKmCards('run',d);renderTssCards('run',d);renderZoneBar('run',d);
+  renderRunPaceWeather();buildRunCaption();
+}
+
+async function analyseCyc(){
+  const act=D.cyc.selected;showSt('cycStatus','loading','Loading ride details…');
+  let det=act,rawZ=null,hadZ=false;
+  try{
+    const[dr,zr]=await Promise.all([
+      fetch(`https://www.strava.com/api/v3/activities/${act.id}`,{headers:{Authorization:`Bearer ${A.token}`}}),
+      fetch(`https://www.strava.com/api/v3/activities/${act.id}/zones`,{headers:{Authorization:`Bearer ${A.token}`}})
+    ]);
+    if(dr.ok)det=await dr.json();
+    if(zr.ok){const zd=await zr.json();rawZ=zd.find(z=>z.type==='heartrate');if(rawZ?.distribution_buckets?.some(b=>b.time>0))hadZ=true;}
+  }catch(e){console.warn(e);}
+  hideSt('cycStatus');
+
+  const avgHR=det.average_heartrate||150,sec=det.moving_time||0,km=det.distance/1000;
+  const{thisWk,wks,avg28,ws}=weeklyKmStats(D.cyc.history);
+  const hasPwr=!!(det.average_watts||det.weighted_average_watts);
+  const tssData=hasPwr?powerTSS(det.weighted_average_watts,det.average_watts,sec,S.ftp):hrTSS(avgHR,sec,S.cycLTHR);
+  const{ctl,atl,ratio}=acwr(D.cyc.history,S.cycLTHR);
+  const zones=hrZones(avgHR,sec,S.cycLTHR,hadZ,rawZ);
+
+  // Elevation
+  const thisWkElev=D.cyc.history.filter(a=>new Date(a.start_date_local)>=ws).reduce((s,a)=>s+(a.total_elevation_gain||0),0);
+  const lwS=new Date(ws.getTime()-7*86400000);
+  const lwElev=D.cyc.history.filter(a=>{const d=new Date(a.start_date_local);return d>=lwS&&d<ws;}).reduce((s,a)=>s+(a.total_elevation_gain||0),0);
+
+  D.cyc.analysis={det,km,thisWk,wks,avg28,...tssData,ctl,atl,ratio,...zones,hasPwr,thisWkElev,lwElev,rideElev:det.total_elevation_gain||0,wx:null,captionText:''};
+  renderCycResults();
+
+  const lat=det.start_latlng?.[0],lng=det.start_latlng?.[1];
+  if(lat&&lng){
+    getWeather(lat,lng,Math.floor(new Date(det.start_date).getTime()/1000)).then(w=>{
+      D.cyc.analysis.wx=w;renderCycWeather();buildCycCaption();
+    });
+  }
+}
+
+function renderCycResults(){
+  document.getElementById('cycResults').classList.remove('hidden');
+  document.getElementById('cycResults').scrollIntoView({behavior:'smooth',block:'start'});
+  const d=D.cyc.analysis;
+  renderKmCards('cyc',d);renderCycTssCards(d);renderZoneBar('cyc',d);renderElevCards(d);
+  renderCycWeather();buildCycCaption();
+}
+
+// ══════════════════════════════════════════════
+// RENDER SECTIONS
+// ══════════════════════════════════════════════
+function renderKmCards(t,d){
+  const prefix=t==='run'?'run':'cyc';
+  const diff=d.avg28>0?((d.thisWk-d.avg28)/d.avg28*100):0;
+  const col=diff>10?'yellow':diff<-20?'blue':'green';
+  const tag=diff>10?'tag-caution':diff<-20?'tag-low':'tag-optimal';
+  document.getElementById(`${prefix}KmCards`).innerHTML=`
+    <div class="metric-card ${col}"><div class="metric-label">This Week</div><div class="metric-value">${d.thisWk.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div><div class="metric-sub">vs ${d.avg28.toFixed(1)} km avg <span class="tag ${tag}">${diff>0?'+':''}${diff.toFixed(0)}%</span></div></div>
+    <div class="metric-card"><div class="metric-label">28-Day Avg/Week</div><div class="metric-value">${d.avg28.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div><div class="metric-sub">Chronic load baseline</div></div>
+    <div class="metric-card"><div class="metric-label">This ${t==='run'?'Run':'Ride'}</div><div class="metric-value">${d.km.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> km</span></div><div class="metric-sub">${fmtDur(d.det.moving_time)}</div></div>`;
+  const all=[d.thisWk,...d.wks];const mx=Math.max(...all,d.avg28,1);
+  const labels=['This wk','-1 wk','-2 wk','-3 wk','-4 wk'];
+  const bc=t==='cyc'?'var(--cyan)':'var(--accent)';
+  document.getElementById(`${prefix}KmChart`).innerHTML=`
+    <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-bottom:4px;">Weekly km — last 4 weeks</div>
+    <div class="km-chart">${all.map((v,i)=>`<div class="km-bar-wrap"><div class="km-bar" style="height:${(v/mx)*100}%;background:${i===0?bc:'var(--surface2)'};border:1px solid ${i===0?bc:'var(--border)'};"></div><div class="km-bar-label">${labels[i]}</div></div>`).join('')}
+    <div class="km-bar-wrap" style="opacity:0.5;"><div class="km-bar" style="height:${(d.avg28/mx)*100}%;background:var(--green);border:1px solid var(--green);"></div><div class="km-bar-label">Avg</div></div></div>`;
+}
+
+function acwrCard(d){
+  let col='green',tag='tag-optimal',lbl='Optimal',desc='Load well-managed.';
+  if(d.ratio!==null){
+    if(d.ratio<0.8){col='blue';tag='tag-low';lbl='Low Load';desc='Safe to increase.';}
+    else if(d.ratio>1.5){col='red';tag='tag-high';lbl='Danger Zone';desc='ACWR >1.5. Rest needed.';}
+    else if(d.ratio>1.3){col='yellow';tag='tag-caution';lbl='High Load';desc='Spike detected — easy day.';}
+  }
+  const val=d.ratio!==null?d.ratio.toFixed(2):'N/A';
+  const gc=col==='green'?'#22c55e':col==='blue'?'#3b82f6':col==='yellow'?'#f59e0b':'#ef4444';
+  const c=2*Math.PI*30,dash=Math.min(d.ratio||0,2)/2*c;
+  return`<div class="metric-card ${col}"><div class="metric-label">ACWR</div><div class="acwr-display"><div class="acwr-gauge"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="30" fill="none" stroke="var(--border)" stroke-width="6"/><circle cx="40" cy="40" r="30" fill="none" stroke="${gc}" stroke-width="6" stroke-dasharray="${dash} ${c}" stroke-linecap="round"/></svg><div class="acwr-text" style="color:${gc}">${val}</div></div><div class="acwr-info"><span class="tag ${tag}">${lbl}</span><div class="adesc">${desc}</div></div></div></div>`;
+}
+
+function renderTssCards(t,d){
+  document.getElementById(`${t}TssCards`).innerHTML=`
+    <div class="metric-card"><div class="metric-label">Run TSS</div><div class="metric-value">${d.tss}<span style="font-size:0.8rem;color:var(--muted)"> pts</span></div><div class="metric-sub">IF: ${(d.IF*100).toFixed(0)}% · LTHR ${S.runLTHR} bpm</div></div>
+    <div class="metric-card"><div class="metric-label">CTL (Fitness)</div><div class="metric-value">${d.ctl.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> TSS/d</span></div><div class="metric-sub">28-day chronic load</div></div>
+    ${acwrCard(d)}`;
+}
+
+function renderCycTssCards(d){
+  const src=d.powered?`Power-based · IF: ${(d.IF*100).toFixed(0)}% · FTP ${S.ftp}w`:`HR-based · IF: ${(d.IF*100).toFixed(0)}% · LTHR ${S.cycLTHR} bpm`;
+  const np=d.det.weighted_average_watts?`NP: ${Math.round(d.det.weighted_average_watts)}w · `:'';
+  const ap=d.det.average_watts?`Avg: ${Math.round(d.det.average_watts)}w`:'';
+  document.getElementById('cycTssCards').innerHTML=`
+    <div class="metric-card cyan"><div class="metric-label">Ride TSS</div><div class="metric-value">${d.tss}<span style="font-size:0.8rem;color:var(--muted)"> pts</span></div><div class="metric-sub">${src}</div>${np||ap?`<div class="metric-sub" style="margin-top:4px;">${np}${ap}</div>`:''}</div>
+    <div class="metric-card"><div class="metric-label">CTL (Fitness)</div><div class="metric-value">${d.ctl.toFixed(1)}<span style="font-size:0.8rem;color:var(--muted)"> TSS/d</span></div><div class="metric-sub">28-day chronic load</div></div>
+    ${acwrCard(d)}`;
+}
+
+function renderZoneBar(t,d){
+  const lthr=t==='run'?S.runLTHR:S.cycLTHR;
+  document.getElementById(`${t}Zones`).innerHTML=`
+    <div class="zone-bar">${d.pcts.map((p,i)=>`<div class="zone-seg" style="width:${p*100}%;background:${ZONES[i].color};min-width:${p>0?'2px':'0'}"></div>`).join('')}</div>
+    <div class="zone-legend">${ZONES.map((z,i)=>`<div class="zone-item"><div class="zone-dot" style="background:${z.color}"></div>${z.label}: ${(d.pcts[i]*100).toFixed(0)}% (${Math.round(d.zs[i]/60)}min)</div>`).join('')}</div>
+    <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:8px;">
+      ${d.det.average_heartrate?`Avg HR: ${Math.round(d.det.average_heartrate)} bpm · `:''}${d.det.max_heartrate?`Max HR: ${Math.round(d.det.max_heartrate)} bpm · `:''}Dominant: ${ZONES[d.dom].label} · LTHR: ${lthr} bpm${!d.hadReal?' · (estimated — Garmin HR gives exact zones)':''}
+    </div>`;
+}
+
+function renderRunPaceWeather(){
+  const d=D.run.analysis;if(!d)return;
+  const w=d.wx;const ap=d.det.moving_time/(d.det.distance/1000);const pen=wxPenalty(w);
+  const pT=d.paceThis?fmtPace(d.paceThis):'--';const pL=d.paceLast?fmtPace(d.paceLast):'--';
+  let tLabel='Insufficient data',tCol='var(--muted)';
+  if(d.paceThis&&d.paceLast){const diff=d.paceLast-d.paceThis;const abs=Math.round(Math.abs(diff));
+    if(diff>5){tLabel=`↑ ${abs}s/km faster this week`;tCol='var(--green)';}
+    else if(diff<-5){tLabel=`↓ ${abs}s/km slower this week`;tCol='#ef4444';}
+    else{tLabel='Pace consistent week-on-week';tCol='var(--yellow)';}
+  }
+  const wxCard=w?`<div class="metric-card blue" style="grid-column:span 3;"><div class="metric-label">Conditions at Run Start · GPS Auto-detected</div><div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px;">
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.temp?.toFixed(1)??'--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Temp</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.feels?.toFixed(1)??'--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Feels like</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.hum??'--'}%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Humidity</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.wind?.toFixed(0)??'--'} km/h</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Wind</div></div>
+    ${(w.rain||0)>0?`<div><div style="font-family:var(--mono);font-size:1.2rem;">${w.rain?.toFixed(1)}mm</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Rain</div></div>`:''}
+    </div>${pen>0?`<div style="font-family:var(--mono);font-size:0.68rem;color:var(--accent2);margin-top:10px;">Running penalty: +${pen}s/km · Adjusted pace: <strong>${fmtPace(ap-pen)}/km</strong></div>`:`<div style="font-family:var(--mono);font-size:0.68rem;color:var(--green);margin-top:10px;">Ideal conditions</div>`}</div>`
+    :`<div class="metric-card" style="grid-column:span 3;"><div class="metric-label">Weather</div><div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-top:6px;">${d.det.start_latlng?'Fetching…':'No GPS data'}</div></div>`;
+
+  document.getElementById('runPaceWeather').innerHTML=`<div class="metrics-grid" style="margin-bottom:12px;">
+    <div class="metric-card"><div class="metric-label">This Week Avg Pace</div><div class="metric-value" style="font-size:1.3rem;">${pT}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div><div class="metric-sub" style="color:${tCol};">${tLabel}</div></div>
+    <div class="metric-card"><div class="metric-label">Last Week Avg Pace</div><div class="metric-value" style="font-size:1.3rem;">${pL}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div><div class="metric-sub">Prior 7-day average</div></div>
+    ${w&&pen>0?`<div class="metric-card"><div class="metric-label">Weather-Adjusted Pace</div><div class="metric-value" style="font-size:1.3rem;">${fmtPace(ap-pen)}<span style="font-size:0.8rem;color:var(--muted)">/km</span></div><div class="metric-sub">+${pen}s/km penalty removed</div></div>`:`<div class="metric-card"><div class="metric-label">Adjustment</div><div class="metric-value" style="font-size:1.1rem;color:var(--muted);">${w?'None needed':'…'}</div></div>`}
+  </div><div class="metrics-grid" style="margin-bottom:0;">${wxCard}</div>`;
+}
+
+function renderElevCards(d){
+  const diff=d.lwElev>0?((d.thisWkElev-d.lwElev)/d.lwElev*100):0;
+  const col=diff>15?'#f59e0b':diff<-15?'#3b82f6':'#22c55e';
+  const lbl=diff>15?'↑ climbing up':diff<-15?'↓ climbing down':'consistent';
+  document.getElementById('cycElevCards').innerHTML=`
+    <div class="metric-card"><div class="metric-label">This Ride</div><div class="metric-value">${Math.round(d.rideElev)}<span style="font-size:0.8rem;color:var(--muted)">m</span></div><div class="metric-sub">Elevation gain</div></div>
+    <div class="metric-card"><div class="metric-label">This Week Total</div><div class="metric-value">${Math.round(d.thisWkElev)}<span style="font-size:0.8rem;color:var(--muted)">m</span></div><div class="metric-sub" style="color:${col};">${d.lwElev>0?`vs ${Math.round(d.lwElev)}m last wk (${diff>0?'+':''}${diff.toFixed(0)}%) · ${lbl}`:'First week of data'}</div></div>
+    <div class="metric-card"><div class="metric-label">Avg Speed</div><div class="metric-value">${d.det.average_speed?(d.det.average_speed*3.6).toFixed(1):'--'}<span style="font-size:0.8rem;color:var(--muted)"> km/h</span></div><div class="metric-sub">${d.det.max_speed?`Max: ${(d.det.max_speed*3.6).toFixed(1)} km/h`:''}</div></div>`;
+}
+
+function renderCycWeather(){
+  const d=D.cyc.analysis;if(!d)return;
+  const w=d.wx;
+  const card=w?`<div class="metric-card blue" style="grid-column:span 3;"><div class="metric-label">Conditions at Ride Start · GPS Auto-detected</div><div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px;">
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.temp?.toFixed(1)??'--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Temp</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.feels?.toFixed(1)??'--'}°C</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Feels like</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.hum??'--'}%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Humidity</div></div>
+    <div><div style="font-family:var(--mono);font-size:1.2rem;">${w.wind?.toFixed(0)??'--'} km/h</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Wind</div></div>
+    ${(w.rain||0)>0?`<div><div style="font-family:var(--mono);font-size:1.2rem;">${w.rain?.toFixed(1)}mm</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);">Rain</div></div>`:''}
+    </div></div>`
+    :`<div class="metric-card" style="grid-column:span 3;"><div class="metric-label">Weather</div><div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-top:6px;">${d.det.start_latlng?'Fetching…':'No GPS data'}</div></div>`;
+  document.getElementById('cycWeatherDiv').innerHTML=`<div class="metrics-grid" style="margin-bottom:0;">${card}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// CAPTIONS
+// ══════════════════════════════════════════════
+function buildRunCaption(){
+  const d=D.run.analysis;if(!d)return;
+  const act=d.det;
+  const exist=(act.description||'').trim().replace(/\n*📊 KADELLTHEPHYSIO DATA[\s\S]*$/,'').trim();
+  const wkDiff=d.avg28>0?((d.thisWk-d.avg28)/d.avg28*100):0;
+  const acwrStr=d.ratio!==null?d.ratio.toFixed(2):'N/A';
+  let acwrSt='✅ Optimal';if(d.ratio!==null){if(d.ratio<0.8)acwrSt='🔵 Below baseline';else if(d.ratio>1.5)acwrSt='🔴 Danger zone';else if(d.ratio>1.3)acwrSt='⚡ High load';}
+  const domPct=(d.pcts[d.dom]*100).toFixed(0),z2Pct=(d.pcts[1]*100).toFixed(0);
+  let paceLine='';
+  if(d.paceThis&&d.paceLast){const diff=d.paceLast-d.paceThis,abs=Math.round(Math.abs(diff));
+    if(diff>5)paceLine=`🏃 Pace: ${fmtPace(d.paceThis)}/km avg this wk · ↑ ${abs}s/km faster than last wk`;
+    else if(diff<-5)paceLine=`🏃 Pace: ${fmtPace(d.paceThis)}/km avg this wk · ↓ ${abs}s/km slower than last wk`;
+    else paceLine=`🏃 Pace: ${fmtPace(d.paceThis)}/km avg this wk · consistent with last wk`;
+  }else if(d.paceThis)paceLine=`🏃 Pace: ${fmtPace(d.paceThis)}/km avg this week`;
+  let wxLine='';
+  if(d.wx){const pen=wxPenalty(d.wx),ap=act.moving_time/(act.distance/1000),cond=`${d.wx.temp?.toFixed(0)}°C feels ${d.wx.feels?.toFixed(0)}°C · ${d.wx.hum}% humidity · ${d.wx.wind?.toFixed(0)}km/h wind`;
+    wxLine=pen>0?`🌡️ ${cond}\n   Adjusted pace: ${fmtPace(ap-pen)}/km (+${pen}s/km penalty)`:`🌡️ ${cond} · Ideal conditions`;}
+  const lines=[`\n\n📊 KADELLTHEPHYSIO DATA`,`─────────────────────────`,
+    `📅 Weekly km: ${d.thisWk.toFixed(1)} km (${wkDiff>0?'+':''}${wkDiff.toFixed(0)}% vs ${d.avg28.toFixed(1)} km avg)`,
+    paceLine,wxLine,`💓 HR: ${domPct}% ${ZONES[d.dom].label} · Z2: ${z2Pct}%`,
+    `⚡ TSS: ${d.tss} pts · CTL: ${d.ctl.toFixed(1)} TSS/day`,
+    `📈 ACWR: ${acwrStr} — ${acwrSt}`,`─────────────────────────`,`KadellThePhysio Data`].filter(Boolean).join('\n');
+  const prev=document.getElementById('runCaption');
+  prev.innerHTML=exist?`<span style="color:var(--muted)">${esc(exist)}</span><span class="new-content">${esc(lines)}</span>`:`<span class="new-content">${esc(lines)}</span>`;
+  D.run.analysis.captionText=exist?exist+lines:lines;
+}
+
+function buildCycCaption(){
+  const d=D.cyc.analysis;if(!d)return;
+  const act=d.det;
+  const exist=(act.description||'').trim().replace(/\n*📊 KADELLTHEPHYSIO DATA[\s\S]*$/,'').trim();
+  const wkDiff=d.avg28>0?((d.thisWk-d.avg28)/d.avg28*100):0;
+  const acwrStr=d.ratio!==null?d.ratio.toFixed(2):'N/A';
+  let acwrSt='✅ Optimal';if(d.ratio!==null){if(d.ratio<0.8)acwrSt='🔵 Below baseline';else if(d.ratio>1.5)acwrSt='🔴 Danger zone';else if(d.ratio>1.3)acwrSt='⚡ High load';}
+  const domPct=(d.pcts[d.dom]*100).toFixed(0),z2Pct=(d.pcts[1]*100).toFixed(0);
+  const elevDiff=d.lwElev>0?((d.thisWkElev-d.lwElev)/d.lwElev*100):0;
+  const elevLine=d.thisWkElev>0?`⛰️ Elevation: ${Math.round(d.rideElev)}m this ride · ${Math.round(d.thisWkElev)}m this week (${elevDiff>0?'+':''}${elevDiff.toFixed(0)}% vs last wk)`:'';
+  const pwrLine=d.powered?`⚡ Power: ${act.weighted_average_watts?`NP ${Math.round(act.weighted_average_watts)}w · `:''}IF: ${(d.IF*100).toFixed(0)}% · TSS: ${d.tss} pts`:`⚡ TSS: ${d.tss} pts (HR-based) · CTL: ${d.ctl.toFixed(1)} TSS/day`;
+  let wxLine='';if(d.wx){const cond=`${d.wx.temp?.toFixed(0)}°C feels ${d.wx.feels?.toFixed(0)}°C · ${d.wx.hum}% humidity · ${d.wx.wind?.toFixed(0)}km/h wind`;wxLine=`🌡️ ${cond}`;}
+  const lines=[`\n\n📊 KADELLTHEPHYSIO DATA`,`─────────────────────────`,
+    `📅 Weekly km: ${d.thisWk.toFixed(1)} km (${wkDiff>0?'+':''}${wkDiff.toFixed(0)}% vs ${d.avg28.toFixed(1)} km avg)`,
+    elevLine,wxLine,`💓 HR: ${domPct}% ${ZONES[d.dom].label} · Z2: ${z2Pct}%`,pwrLine,
+    `📈 ACWR: ${acwrStr} — ${acwrSt}`,`─────────────────────────`,`KadellThePhysio Data`].filter(Boolean).join('\n');
+  const prev=document.getElementById('cycCaption');
+  prev.innerHTML=exist?`<span style="color:var(--muted)">${esc(exist)}</span><span class="new-content">${esc(lines)}</span>`:`<span class="new-content">${esc(lines)}</span>`;
+  D.cyc.analysis.captionText=exist?exist+lines:lines;
+}
+
+// ══════════════════════════════════════════════
+// STRAVA UPDATE
+// ══════════════════════════════════════════════
+async function pushToStrava(t){
+  const btnId=t==='run'?'runUpdateBtn':'cycUpdateBtn';
+  const stId=t==='run'?'runUpdateStatus':'cycUpdateStatus';
+  const analysis=t==='run'?D.run.analysis:D.cyc.analysis;
+  const selected=t==='run'?D.run.selected:D.cyc.selected;
+  document.getElementById(btnId).disabled=true;
+  showSt(stId,'loading','Updating Strava activity…');
+  try{
+    const r=await fetch(`https://www.strava.com/api/v3/activities/${selected.id}`,{method:'PUT',headers:{Authorization:`Bearer ${A.token}`,'Content-Type':'application/json'},body:JSON.stringify({description:analysis.captionText})});
+    if(!r.ok){const e=await r.json();throw new Error(e.message||`HTTP ${r.status}`);}
+    showSt(stId,'success','✓ Strava activity updated!');
+  }catch(e){showSt(stId,'error',`Failed: ${e.message}`);document.getElementById(btnId).disabled=false;}
+}
+
+function copyText(t){
+  const txt=t==='run'?D.run.analysis?.captionText:D.cyc.analysis?.captionText;
+  if(!txt)return;
+  navigator.clipboard.writeText(txt).then(()=>{const id=t==='run'?'runUpdateStatus':'cycUpdateStatus';showSt(id,'success','✓ Copied');setTimeout(()=>hideSt(id),3000);});
+}
+
+function resetPanel(t){
+  document.getElementById(t==='run'?'runResults':'cycResults').classList.add('hidden');
+  D[t].selected=null;D[t].analysis=null;
+  D[t].acts.forEach((_,i)=>{const e=document.getElementById(`${t}-a-${i}`);if(e)e.classList.remove('selected');});
+  document.getElementById(t==='run'?'runAnalyseBtn':'cycAnalyseBtn').disabled=true;
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function fmtDur(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${m}:${String(ss).padStart(2,'0')}`;}
+function fmtPace(s){return`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showSt(id,type,msg){const e=document.getElementById(id);if(!e)return;e.classList.remove('hidden','error','success','loading');e.classList.add('status-bar',type);e.innerHTML=type==='loading'?`<div class="spinner"></div>${msg}`:msg;}
+function hideSt(id){document.getElementById(id)?.classList.add('hidden');}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init(){
+  loadSettings();
+  const ci=localStorage.getItem('strava_ci');if(ci)document.getElementById('clientId').value=ci;
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('code')){const ok=await handleCB();if(ok)setConnected('Athlete');return;}
+  const at=localStorage.getItem('strava_at'),exp=+localStorage.getItem('strava_exp')||0;
+  if(at&&exp>Math.floor(Date.now()/1000)-300){A.token=at;setConnected('Athlete');}
+  else if(localStorage.getItem('strava_rt')){const ok=await refreshIfNeeded();if(ok)setConnected('Athlete');}
+}
+
+// ══════════════════════════════════════════════
+// EXPORT SYSTEM
+// ══════════════════════════════════════════════
+let EX = {
+  type: 'run',       // 'run' | 'cyc'
+  style: 'dark',     // 'dark' | 'light' | 'gradient'
+  accent: '#fc4c02',
+  blocks: {
+    headline: true,
+    weeklyKm: true,
+    tssAcwr: true,
+    hrZones: true,
+    paceTrend: true,
+    weather: true
+  }
+};
+
+const BLOCK_LABELS = {
+  headline:  'Headline stats',
+  weeklyKm:  'Weekly km + chart',
+  tssAcwr:   'TSS + ACWR',
+  hrZones:   'HR Zone bar',
+  paceTrend: 'Pace trend / Elevation',
+  weather:   'Weather conditions'
+};
+
+// Canvas dimensions — 9:16 story
+const CW = 1080, CH = 1920;
+
+function openExport(t) {
+  EX.type = t;
+  document.getElementById('exportModal').classList.remove('hidden');
+  // Build toggle list
+  const tl = document.getElementById('exportToggles');
+  tl.innerHTML = Object.entries(BLOCK_LABELS).map(([k, v]) => `
+    <div class="toggle-row">
+      <span class="toggle-row-label">${v}</span>
+      <label class="toggle-switch">
+        <input type="checkbox" ${EX.blocks[k] ? 'checked' : ''} onchange="EX.blocks['${k}']=this.checked;renderExport()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`).join('');
+  renderExport();
+}
+
+function closeExport() {
+  document.getElementById('exportModal').classList.add('hidden');
+}
+
+function setExStyle(s) {
+  EX.style = s;
+  ['Dark','Light','Grad'].forEach(n => document.getElementById('style'+n).classList.remove('active'));
+  document.getElementById('style' + s.charAt(0).toUpperCase() + s.slice(1).replace('ient','')).classList.add('active');
+  renderExport();
+}
+
+function setAccent(c, el) {
+  EX.accent = c;
+  document.querySelectorAll('.accent-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  renderExport();
+}
+
+function getTheme() {
+  if (EX.style === 'light') return {
+    bg: '#ffffff', bg2: '#f4f4f5', surface: '#f9f9f9',
+    text: '#09090b', muted: '#71717a', border: '#e4e4e7',
+    accent: EX.accent, isLight: true, isGrad: false
+  };
+  if (EX.style === 'gradient') return {
+    bg: null, bg2: 'rgba(255,255,255,0.07)', surface: 'rgba(255,255,255,0.05)',
+    text: '#ffffff', muted: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.12)',
+    accent: EX.accent, isLight: false, isGrad: true
+  };
+  // dark
+  return {
+    bg: '#0a0c10', bg2: '#1a1d25', surface: '#111318',
+    text: '#e8eaf0', muted: '#6b7280', border: '#252830',
+    accent: EX.accent, isLight: false, isGrad: false
+  };
+}
+
+function renderExport() {
+  const canvas = document.getElementById('exportCanvas');
+  canvas.width = CW; canvas.height = CH;
+  const ctx = canvas.getContext('2d');
+  const T = getTheme();
+  const d = EX.type === 'run' ? D.run.analysis : D.cyc.analysis;
+  if (!d) return;
+
+  // Background
+  if (T.isGrad) {
+    const grad = ctx.createLinearGradient(0, 0, CW, CH);
+    grad.addColorStop(0, '#0d0d1a');
+    grad.addColorStop(0.5, '#0a1628');
+    grad.addColorStop(1, '#0d0d1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, CW, CH);
+    // Subtle noise texture via dots
+    ctx.fillStyle = 'rgba(255,255,255,0.015)';
+    for (let i = 0; i < 3000; i++) {
+      ctx.fillRect(Math.random()*CW, Math.random()*CH, 1, 1);
     }
-
-    showStatus('updateStatus', 'success', '✓ Strava activity updated! Check your Strava app.');
-  } catch (e) {
-    showStatus('updateStatus', 'error', `Failed: ${e.message}`);
-    btn.disabled = false;
-  }
-}
-
-function copyCaption() {
-  navigator.clipboard.writeText(state.captionText || '').then(() => {
-    showStatus('updateStatus', 'success', '✓ Caption text copied to clipboard');
-    setTimeout(() => hideStatus('updateStatus'), 3000);
-  });
-}
-
-function resetAnalysis() {
-  document.getElementById('resultsPanel').classList.add('hidden');
-  state.selectedActivity = null;
-  state.analysisData = null;
-  document.querySelectorAll('.activity-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById('analyseBtn').disabled = true;
-  document.getElementById('step3Num').classList.remove('done');
-}
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-function fmtDuration(sec) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-function fmtPace(secPerKm) {
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  return `${m}:${String(s).padStart(2,'0')}`;
-}
-
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function showStatus(id, type, msg) {
-  const el = document.getElementById(id);
-  el.classList.remove('hidden', 'error', 'success', 'loading');
-  el.classList.add('status-bar', type);
-  el.innerHTML = type === 'loading' ? `<div class="spinner"></div>${msg}` : msg;
-}
-
-function hideStatus(id) {
-  document.getElementById(id).classList.add('hidden');
-}
-
-// ─────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────
-async function init() {
-  // Load saved credentials into fields
-  const savedId = localStorage.getItem('strava_client_id');
-  if (savedId) document.getElementById('clientId').value = savedId;
-
-  // Check if returning from OAuth
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('code')) {
-    const ok = await handleCallback();
-    if (ok) {
-      document.getElementById('step2Num').classList.remove('locked');
-      document.getElementById('fetchBtn').disabled = false;
+    // Accent glow circles
+    const grd1 = ctx.createRadialGradient(CW*0.8, CH*0.15, 0, CW*0.8, CH*0.15, 500);
+    grd1.addColorStop(0, hexAlpha(EX.accent, 0.18));
+    grd1.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd1;
+    ctx.fillRect(0, 0, CW, CH);
+    const grd2 = ctx.createRadialGradient(CW*0.2, CH*0.85, 0, CW*0.2, CH*0.85, 400);
+    grd2.addColorStop(0, hexAlpha(EX.accent, 0.1));
+    grd2.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd2;
+    ctx.fillRect(0, 0, CW, CH);
+  } else {
+    ctx.fillStyle = T.bg;
+    ctx.fillRect(0, 0, CW, CH);
+    // Grid pattern for dark
+    if (!T.isLight) {
+      ctx.strokeStyle = 'rgba(252,76,2,0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < CW; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+      for (let y = 0; y < CH; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
     }
-    return;
   }
 
-  // Check if we have a valid cached token
-  const cachedToken = localStorage.getItem('strava_access_token');
-  const expiry = parseInt(localStorage.getItem('strava_token_expiry') || '0');
-  const now = Math.floor(Date.now() / 1000);
+  // Accent bar at top
+  const accentGrad = ctx.createLinearGradient(0,0,CW,0);
+  accentGrad.addColorStop(0, EX.accent);
+  accentGrad.addColorStop(1, shiftColor(EX.accent, 40));
+  ctx.fillStyle = accentGrad;
+  ctx.fillRect(0, 0, CW, 8);
 
-  if (cachedToken && expiry > now - 300) {
-    state.accessToken = cachedToken;
-    state.clientId = localStorage.getItem('strava_client_id') || '';
-    state.clientSecret = localStorage.getItem('strava_client_secret') || '';
-    setConnected('Athlete');
-  } else if (localStorage.getItem('strava_refresh_token')) {
-    const ok = await refreshTokenIfNeeded();
-    if (ok) setConnected('Athlete');
+  let y = 80; // current draw cursor
+  const PAD = 70;
+  const W = CW - PAD*2;
+
+  // ── Header ──
+  ctx.fillStyle = T.accent;
+  ctx.font = `800 52px 'Syne', 'Arial Black', sans-serif`;
+  ctx.fillText('KADELL', PAD, y);
+  const kw = ctx.measureText('KADELL').width;
+  ctx.fillStyle = T.text;
+  ctx.fillText('DATA', PAD + kw + 8, y);
+  y += 36;
+  ctx.fillStyle = T.muted;
+  ctx.font = `400 28px 'DM Mono', monospace`;
+  ctx.fillText('KADELLTHEPHYSIO · TRAINING LOAD', PAD, y);
+  y += 20;
+
+  // Thin divider
+  ctx.fillStyle = T.border;
+  ctx.fillRect(PAD, y, W, 2);
+  y += 40;
+
+  // Activity name + date
+  if (EX.blocks.headline) {
+    const act = d.det;
+    ctx.fillStyle = T.text;
+    ctx.font = `700 58px 'Syne', sans-serif`;
+    wrapText(ctx, act.name || 'Activity', PAD, y, W, 65);
+    y += act.name && act.name.length > 22 ? 130 : 68;
+
+    const dateStr = new Date(act.start_date_local).toLocaleDateString('en-AU', {weekday:'long',day:'numeric',month:'long'});
+    ctx.fillStyle = T.muted;
+    ctx.font = `400 30px 'DM Mono', monospace`;
+    ctx.fillText(dateStr.toUpperCase(), PAD, y);
+    y += 56;
+
+    // Headline stats row
+    const stats = EX.type === 'run'
+      ? [
+          {v: d.km.toFixed(1), u: 'km'},
+          {v: fmtDur(act.moving_time), u: 'time'},
+          {v: act.average_heartrate ? Math.round(act.average_heartrate)+'' : '--', u: 'avg bpm'},
+          {v: fmtPace(act.moving_time/(act.distance/1000)), u: '/km pace'}
+        ]
+      : [
+          {v: d.km.toFixed(1), u: 'km'},
+          {v: fmtDur(act.moving_time), u: 'time'},
+          {v: act.average_heartrate ? Math.round(act.average_heartrate)+'' : '--', u: 'avg bpm'},
+          {v: act.average_watts ? Math.round(act.average_watts)+'w' : '--', u: 'avg power'}
+        ];
+
+    const sw = W/stats.length;
+    stats.forEach((s, i) => {
+      const sx = PAD + i*sw;
+      // box
+      roundRect(ctx, sx, y, sw-12, 130, 16, T.bg2, T.border);
+      ctx.fillStyle = T.accent;
+      ctx.font = `500 56px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(s.v, sx + (sw-12)/2, y+76);
+      ctx.fillStyle = T.muted;
+      ctx.font = `400 24px 'DM Mono', monospace`;
+      ctx.fillText(s.u.toUpperCase(), sx + (sw-12)/2, y+110);
+      ctx.textAlign = 'left';
+    });
+    y += 156;
+    divider(ctx, PAD, y, W, T.border); y += 44;
   }
+
+  // ── Weekly KM + bar chart ──
+  if (EX.blocks.weeklyKm) {
+    sectionLabel(ctx, '📅  WEEKLY KM', PAD, y, T.muted); y += 48;
+    const wkDiff = d.avg28>0 ? ((d.thisWk-d.avg28)/d.avg28*100) : 0;
+    const wkCol = wkDiff > 10 ? '#f59e0b' : wkDiff < -20 ? '#3b82f6' : '#22c55e';
+    ctx.font = `500 80px 'DM Mono', monospace`;
+    ctx.fillStyle = T.text;
+    ctx.fillText(`${d.thisWk.toFixed(1)} km`, PAD, y);
+    const numW = ctx.measureText(`${d.thisWk.toFixed(1)} km`).width;
+    // badge
+    ctx.font = `500 26px 'DM Mono', monospace`;
+    const badge = `${wkDiff>0?'+':''}${wkDiff.toFixed(0)}%`;
+    const bw = ctx.measureText(badge).width + 24;
+    roundRect(ctx, PAD+numW+20, y-46, bw, 40, 8, hexAlpha(wkCol,0.18), 'transparent');
+    ctx.fillStyle = wkCol;
+    ctx.fillText(badge, PAD+numW+32, y-16);
+    y += 14;
+    ctx.fillStyle = T.muted;
+    ctx.font = `400 26px 'DM Mono', monospace`;
+    ctx.fillText(`vs ${d.avg28.toFixed(1)} km 28-day avg`, PAD, y);
+    y += 48;
+
+    // Mini bar chart
+    const allW = [d.thisWk, ...d.wks];
+    const maxW = Math.max(...allW, d.avg28, 1);
+    const chartH = 100, barW = Math.floor(W/6) - 10;
+    const barLabels = ['This','–1wk','–2wk','–3wk','–4wk','Avg'];
+    const barVals = [...allW, d.avg28];
+    const barCols = [T.accent, T.muted, T.muted, T.muted, T.muted, '#22c55e'];
+    barVals.forEach((v, i) => {
+      const bx = PAD + i*(barW+10);
+      const bh = Math.max((v/maxW)*chartH, 3);
+      const by = y + chartH - bh;
+      // bg
+      ctx.fillStyle = T.bg2;
+      ctx.fillRect(bx, y, barW, chartH);
+      // fill
+      ctx.fillStyle = i===0 ? T.accent : (i===5 ? '#22c55e' : T.bg2);
+      ctx.strokeStyle = i===0 ? T.accent : (i===5 ? '#22c55e' : T.border);
+      ctx.lineWidth = 2;
+      ctx.fillRect(bx, by, barW, bh);
+      ctx.strokeRect(bx, by, barW, bh);
+      ctx.fillStyle = T.muted;
+      ctx.font = `400 20px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(barLabels[i], bx+barW/2, y+chartH+28);
+      ctx.textAlign = 'left';
+    });
+    y += chartH + 56;
+    divider(ctx, PAD, y, W, T.border); y += 44;
+  }
+
+  // ── TSS + ACWR ──
+  if (EX.blocks.tssAcwr) {
+    sectionLabel(ctx, '⚡  TRAINING STRESS', PAD, y, T.muted); y += 48;
+    const acwrVal = d.ratio !== null ? d.ratio.toFixed(2) : 'N/A';
+    let acwrCol = '#22c55e', acwrLbl = 'Optimal';
+    if (d.ratio !== null) {
+      if (d.ratio < 0.8) { acwrCol='#3b82f6'; acwrLbl='Below baseline'; }
+      else if (d.ratio > 1.5) { acwrCol='#ef4444'; acwrLbl='Danger zone'; }
+      else if (d.ratio > 1.3) { acwrCol='#f59e0b'; acwrLbl='High load'; }
+    }
+    // TSS box
+    const boxW = (W-20)/3;
+    [[`${d.tss}`, 'TSS', T.accent],[`${d.ctl.toFixed(1)}`, 'CTL TSS/d', T.text],[acwrVal, 'ACWR', acwrCol]].forEach(([v,l,c],i)=>{
+      const bx = PAD + i*(boxW+10);
+      roundRect(ctx, bx, y, boxW, 140, 16, T.bg2, T.border);
+      ctx.fillStyle = c;
+      ctx.font = `500 64px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v, bx+boxW/2, y+88);
+      ctx.fillStyle = T.muted;
+      ctx.font = `400 24px 'DM Mono', monospace`;
+      ctx.fillText(l, bx+boxW/2, y+122);
+      ctx.textAlign = 'left';
+    });
+    y += 158;
+    ctx.fillStyle = acwrCol;
+    ctx.font = `500 28px 'DM Mono', monospace`;
+    ctx.fillText(`ACWR: ${acwrLbl.toUpperCase()}`, PAD, y);
+    y += 52;
+    divider(ctx, PAD, y, W, T.border); y += 44;
+  }
+
+  // ── HR Zones ──
+  if (EX.blocks.hrZones) {
+    sectionLabel(ctx, '💓  HEART RATE ZONES', PAD, y, T.muted); y += 48;
+    const zColors = ['#3b82f6','#22c55e','#f59e0b','#f97316','#ef4444'];
+    const barH = 36;
+    // Zone bar
+    let zx = PAD;
+    d.pcts.forEach((p, i) => {
+      if (p > 0.005) {
+        ctx.fillStyle = zColors[i];
+        ctx.fillRect(zx, y, p*W, barH);
+        zx += p*W;
+      }
+    });
+    // Round ends
+    y += barH + 20;
+    const zLabels = ['Z1 Recovery','Z2 Aerobic','Z3 Tempo','Z4 Threshold','Z5 VO2max'];
+    const cols2 = Math.ceil(zLabels.length/2);
+    zLabels.forEach((lbl, i) => {
+      const col = i % 2, row = Math.floor(i/2);
+      // Actually layout as simple list
+    });
+    // List layout
+    const zRowW = W/2;
+    d.pcts.forEach((p, i) => {
+      const col = i % 2, row = Math.floor(i/2);
+      const zx2 = PAD + col*zRowW;
+      const zy = y + row*38;
+      ctx.fillStyle = zColors[i];
+      ctx.fillRect(zx2, zy+4, 18, 18);
+      ctx.fillStyle = T.text;
+      ctx.font = `400 24px 'DM Mono', monospace`;
+      ctx.fillText(`${zLabels[i]}: ${(p*100).toFixed(0)}%`, zx2+28, zy+20);
+    });
+    y += Math.ceil(zLabels.length/2)*38 + 30;
+    // Dominant zone callout
+    ctx.fillStyle = zColors[d.dom];
+    ctx.font = `700 30px 'DM Mono', monospace`;
+    ctx.fillText(`Dominant: ${zLabels[d.dom]}`, PAD, y);
+    y += 52;
+    divider(ctx, PAD, y, W, T.border); y += 44;
+  }
+
+  // ── Pace trend (run) / Elevation (cyc) ──
+  if (EX.blocks.paceTrend) {
+    if (EX.type === 'run') {
+      sectionLabel(ctx, '🏃  PACE TREND', PAD, y, T.muted); y += 48;
+      const pT = d.paceThis ? fmtPace(d.paceThis) : '--';
+      const pL = d.paceLast ? fmtPace(d.paceLast) : '--';
+      let trendTxt = 'Insufficient data', trendCol = T.muted;
+      if (d.paceThis && d.paceLast) {
+        const diff = d.paceLast - d.paceThis;
+        const abs = Math.round(Math.abs(diff));
+        if (diff > 5) { trendTxt = `↑ ${abs}s/km faster this week`; trendCol = '#22c55e'; }
+        else if (diff < -5) { trendTxt = `↓ ${abs}s/km slower this week`; trendCol = '#ef4444'; }
+        else { trendTxt = 'Consistent week-on-week'; trendCol = '#f59e0b'; }
+      }
+      const hw = (W-20)/2;
+      [[`${pT}/km`,'This week'],[`${pL}/km`,'Last week']].forEach(([v,l],i)=>{
+        const bx = PAD + i*(hw+20);
+        roundRect(ctx, bx, y, hw, 120, 16, T.bg2, T.border);
+        ctx.fillStyle = i===0 ? T.accent : T.text;
+        ctx.font = `500 52px 'DM Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(v, bx+hw/2, y+76);
+        ctx.fillStyle = T.muted;
+        ctx.font = `400 24px 'DM Mono', monospace`;
+        ctx.fillText(l.toUpperCase(), bx+hw/2, y+110);
+        ctx.textAlign = 'left';
+      });
+      y += 140;
+      ctx.fillStyle = trendCol;
+      ctx.font = `500 28px 'DM Mono', monospace`;
+      ctx.fillText(trendTxt.toUpperCase(), PAD, y);
+      y += 52;
+    } else {
+      sectionLabel(ctx, '⛰️  ELEVATION', PAD, y, T.muted); y += 48;
+      const elevDiff = d.lwElev>0 ? ((d.thisWkElev-d.lwElev)/d.lwElev*100) : 0;
+      const elevCol = elevDiff>15?'#f59e0b':elevDiff<-15?'#3b82f6':'#22c55e';
+      const hw = (W-20)/2;
+      [[`${Math.round(d.rideElev)}m`,'This ride'],[`${Math.round(d.thisWkElev)}m`,'This week']].forEach(([v,l],i)=>{
+        const bx = PAD + i*(hw+20);
+        roundRect(ctx, bx, y, hw, 120, 16, T.bg2, T.border);
+        ctx.fillStyle = i===0 ? T.accent : T.text;
+        ctx.font = `500 52px 'DM Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(v, bx+hw/2, y+76);
+        ctx.fillStyle = T.muted;
+        ctx.font = `400 24px 'DM Mono', monospace`;
+        ctx.fillText(l.toUpperCase(), bx+hw/2, y+110);
+        ctx.textAlign = 'left';
+      });
+      y += 140;
+      if (d.lwElev > 0) {
+        ctx.fillStyle = elevCol;
+        ctx.font = `500 28px 'DM Mono', monospace`;
+        ctx.fillText(`${elevDiff>0?'+':''}${elevDiff.toFixed(0)}% vs last week`.toUpperCase(), PAD, y);
+      }
+      y += 52;
+    }
+    divider(ctx, PAD, y, W, T.border); y += 44;
+  }
+
+  // ── Weather ──
+  if (EX.blocks.weather && d.wx) {
+    sectionLabel(ctx, '🌡️  CONDITIONS', PAD, y, T.muted); y += 48;
+    const w = d.wx;
+    const wItems = [
+      {v:`${w.temp?.toFixed(1)??'--'}°`, l:'Temp'},
+      {v:`${w.feels?.toFixed(1)??'--'}°`, l:'Feels like'},
+      {v:`${w.hum??'--'}%`, l:'Humidity'},
+      {v:`${w.wind?.toFixed(0)??'--'}`, l:'Wind km/h'}
+    ];
+    const ww = W/4;
+    wItems.forEach((item, i) => {
+      const wx = PAD + i*ww;
+      ctx.fillStyle = T.accent;
+      ctx.font = `500 52px 'DM Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(item.v, wx+ww/2, y+56);
+      ctx.fillStyle = T.muted;
+      ctx.font = `400 22px 'DM Mono', monospace`;
+      ctx.fillText(item.l.toUpperCase(), wx+ww/2, y+88);
+      ctx.textAlign = 'left';
+    });
+    y += 110;
+    if (EX.type === 'run') {
+      const pen = wxPenalty(w);
+      if (pen > 0) {
+        const adjPace = fmtPace(d.det.moving_time/(d.det.distance/1000) - pen);
+        ctx.fillStyle = T.muted;
+        ctx.font = `400 26px 'DM Mono', monospace`;
+        ctx.fillText(`Adj. pace: ${adjPace}/km (+${pen}s/km weather penalty)`, PAD, y);
+        y += 40;
+      }
+    }
+    y += 24;
+  }
+
+  // ── Footer ──
+  ctx.fillStyle = T.border;
+  ctx.fillRect(PAD, CH-100, W, 2);
+  ctx.fillStyle = T.muted;
+  ctx.font = `400 26px 'DM Mono', monospace`;
+  ctx.fillText('KADELLTHEPHYSIO.COM.AU · TRAINING DATA', PAD, CH-58);
+  // Accent bar bottom
+  ctx.fillStyle = accentGradBottom(ctx, EX.accent);
+  ctx.fillRect(0, CH-8, CW, 8);
 }
+
+function accentGradBottom(ctx, c) {
+  const g = ctx.createLinearGradient(0,0,CW,0);
+  g.addColorStop(0, c); g.addColorStop(1, shiftColor(c,40)); return g;
+}
+
+// ── Canvas drawing helpers ──
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+  if (fill && fill !== 'transparent') { ctx.fillStyle=fill; ctx.fill(); }
+  if (stroke && stroke !== 'transparent') { ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.stroke(); }
+}
+
+function divider(ctx, x, y, w, col) {
+  ctx.fillStyle = col; ctx.fillRect(x, y, w, 1);
+}
+
+function sectionLabel(ctx, text, x, y, col) {
+  ctx.fillStyle = col;
+  ctx.font = `400 28px 'DM Mono', monospace`;
+  ctx.letterSpacing = '0.1em';
+  ctx.fillText(text, x, y);
+  ctx.letterSpacing = '0';
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + ' ';
+    if (ctx.measureText(test).width > maxW && i > 0) {
+      ctx.fillText(line, x, y); line = words[i] + ' '; y += lineH;
+    } else { line = test; }
+  }
+  ctx.fillText(line, x, y);
+}
+
+function hexAlpha(hex, alpha) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function shiftColor(hex, amount) {
+  const r=Math.min(255,parseInt(hex.slice(1,3),16)+amount);
+  const g=Math.min(255,parseInt(hex.slice(3,5),16)+Math.floor(amount/2));
+  const b=Math.min(255,parseInt(hex.slice(5,7),16));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+function downloadCard() {
+  renderExport(); // final hi-res render
+  const canvas = document.getElementById('exportCanvas');
+  const link = document.createElement('a');
+  const actName = (EX.type==='run'?D.run.analysis?.det?.name:D.cyc.analysis?.det?.name)||'activity';
+  link.download = `kadell-${EX.type}-${actName.replace(/\s+/g,'-').toLowerCase()}-${EX.style}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  const st = document.getElementById('exportStatus');
+  st.textContent = '✓ Downloading…';
+  st.style.display = 'block';
+  setTimeout(() => st.style.display = 'none', 3000);
+}
+
 
 init();
 </script>
