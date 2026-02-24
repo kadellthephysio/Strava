@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KadellThePhysio Data</title>
+<title>Load Analysis</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -194,7 +194,7 @@
 <!-- Header -->
 <div class="header">
   <div class="logo-area">
-    <h1>KADELL<span>DATA</span></h1>
+    <h1>LOAD<span> ANALYSIS</span></h1>
     <p>KadellThePhysio · Training Load Analysis</p>
   </div>
   <div class="strava-badge" id="connectionBadge"><div class="dot"></div><span id="connectionLabel">Not connected</span></div>
@@ -918,12 +918,12 @@ function buildRunCaption(){
   let acwrSt='✅ Optimal';
   if(d.ratio!==null){if(d.ratio<0.8)acwrSt='🔵 Below baseline';else if(d.ratio>1.5)acwrSt='🔴 Danger zone';else if(d.ratio>1.3)acwrSt='⚡ High load';}
 
-  const lines=[`\n📊 KADELLTHEPHYSIO DATA`,`─────────────────────────`,
+  const lines=[`\n📊 LOAD ANALYSIS`,`─────────────────────────`,
     `📅 Weekly km: ${d.thisWk.toFixed(1)} km (${wkDiff>0?'+':''}${wkDiff.toFixed(0)}% vs ${d.avg28.toFixed(1)} km avg)`,
     longRunLine,paceLine,wxLine,hrLine,
     `⚡ TSS: ${d.tss} pts · CTL: ${d.ctl.toFixed(1)} TSS/day`,
     `📈 ACWR: ${acwrStr} — ${acwrSt}`,
-    loadLine,`─────────────────────────`,`KadellThePhysio · Physiotherapy | 1:1 Coaching`].filter(Boolean).join('\n');
+    loadLine,`─────────────────────────`,`KadellThePhysio | 1:1 Coaching | Physiotherapy`].filter(Boolean).join('\n');
   const prev=document.getElementById('runCaption');
   prev.innerHTML=exist?`<span style="color:var(--muted)">${esc(exist)}</span><span class="new-content">${esc(lines)}</span>`:`<span class="new-content">${esc(lines)}</span>`;
   D.run.analysis.captionText=exist?exist+lines:lines;
@@ -951,11 +951,11 @@ function buildCycCaption(){
   if(loadFlags===0)      loadLine=`🟢 Load: On track`;
   else if(loadFlags===1) loadLine=`🟡 Load: Caution (${loadReasons.join(', ')})`;
   else                   loadLine=`🔴 Load: Spiked (${loadReasons.join(', ')})`;
-  const lines=[`\n📊 KADELLTHEPHYSIO DATA`,`─────────────────────────`,
+  const lines=[`\n📊 LOAD ANALYSIS`,`─────────────────────────`,
     `📅 Weekly km: ${d.thisWk.toFixed(1)} km (${wkDiff>0?'+':''}${wkDiff.toFixed(0)}% vs ${d.avg28.toFixed(1)} km avg)`,
     elevLine,wxLine,hrLine,pwrLine,
     `📈 ACWR: ${acwrStr} — ${acwrSt}`,
-    loadLine,`─────────────────────────`,`KadellThePhysio · Physiotherapy | 1:1 Coaching`].filter(Boolean).join('\n');
+    loadLine,`─────────────────────────`,`KadellThePhysio | 1:1 Coaching | Physiotherapy`].filter(Boolean).join('\n');
   const prev=document.getElementById('cycCaption');
   prev.innerHTML=exist?`<span style="color:var(--muted)">${esc(exist)}</span><span class="new-content">${esc(lines)}</span>`:`<span class="new-content">${esc(lines)}</span>`;
   D.cyc.analysis.captionText=exist?exist+lines:lines;
@@ -1443,7 +1443,7 @@ function renderExport() {
   ctx.fillRect(PAD, CH-100, W, 2);
   ctx.fillStyle = T.muted;
   ctx.font = `400 26px 'DM Mono', monospace`;
-  ctx.fillText('KADELLTHEPHYSIO · PHYSIOTHERAPY | 1:1 COACHING', PAD, CH-58);
+  ctx.fillText('KADELLTHEPHYSIO | 1:1 COACHING | PHYSIOTHERAPY', PAD, CH-58);
   // Accent bar bottom
   ctx.fillStyle = accentGradBottom(ctx, EX.accent);
   ctx.fillRect(0, CH-8, CW, 8);
