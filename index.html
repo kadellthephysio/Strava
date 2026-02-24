@@ -653,6 +653,8 @@ async function doAnalyse(t){
 
 async function analyseRun(){
   const act=D.run.selected;showSt('runStatus','loading','Loading run details…');
+  // Ensure history is loaded before computing stats
+  if(!D.run.history.length) await fetchHistory('run');
   let det=act,rawZ=null,hadZ=false;
   try{
     const[dr,zr]=await Promise.all([
@@ -698,6 +700,8 @@ function renderRunResults(){
 
 async function analyseCyc(){
   const act=D.cyc.selected;showSt('cycStatus','loading','Loading ride details…');
+  // Ensure history is loaded before computing stats
+  if(!D.cyc.history.length) await fetchHistory('cyc');
   let det=act,rawZ=null,hadZ=false;
   try{
     const[dr,zr]=await Promise.all([
@@ -933,14 +937,25 @@ function buildCycCaption(){
   const acwrStr=d.ratio!==null?d.ratio.toFixed(2):'N/A';
   let acwrSt='✅ Optimal';if(d.ratio!==null){if(d.ratio<0.8)acwrSt='🔵 Below baseline';else if(d.ratio>1.5)acwrSt='🔴 Danger zone';else if(d.ratio>1.3)acwrSt='⚡ High load';}
   const domPct=(d.pcts[d.dom]*100).toFixed(0),z2Pct=(d.pcts[1]*100).toFixed(0);
+  const aboveThreshMin=Math.round(((d.zs[3]||0)+(d.zs[4]||0))/60);
+  const hrLine=`💓 HR: ${domPct}% ${ZONES[d.dom].label} · Z2: ${z2Pct}% · ${aboveThreshMin}min above threshold`;
   const elevDiff=d.lwElev>0?((d.thisWkElev-d.lwElev)/d.lwElev*100):0;
-  const elevLine=d.thisWkElev>0?`⛰️ Elevation: ${Math.round(d.rideElev)}m this ride · ${Math.round(d.thisWkElev)}m this week (${elevDiff>0?'+':''}${elevDiff.toFixed(0)}% vs last wk)`:'';
+  const elevLine=d.rideElev>0?`⛰️ Elevation: ${Math.round(d.rideElev)}m this ride · ${Math.round(d.thisWkElev)}m this week${d.lwElev>0?` (${elevDiff>0?'+':''}${elevDiff.toFixed(0)}% vs last wk)`:''}`:'';
   const pwrLine=d.powered?`⚡ Power: ${act.weighted_average_watts?`NP ${Math.round(act.weighted_average_watts)}w · `:''}IF: ${(d.IF*100).toFixed(0)}% · TSS: ${d.tss} pts`:`⚡ TSS: ${d.tss} pts (HR-based) · CTL: ${d.ctl.toFixed(1)} TSS/day`;
   let wxLine='';if(d.wx){const cond=`${d.wx.temp?.toFixed(0)}°C feels ${d.wx.feels?.toFixed(0)}°C · ${d.wx.hum}% humidity · ${d.wx.wind?.toFixed(0)}km/h wind`;wxLine=`🌡️ ${cond}`;}
+  // Load summary
+  let loadFlags=0,loadReasons=[];
+  if(d.ratio!==null){if(d.ratio>1.5){loadFlags+=2;loadReasons.push('ACWR danger');}else if(d.ratio>1.3){loadFlags++;loadReasons.push('ACWR elevated');}}
+  if(wkDiff>20){loadFlags++;loadReasons.push('weekly km spike');}
+  let loadLine='';
+  if(loadFlags===0)      loadLine=`🟢 Load: On track`;
+  else if(loadFlags===1) loadLine=`🟡 Load: Caution (${loadReasons.join(', ')})`;
+  else                   loadLine=`🔴 Load: Spiked (${loadReasons.join(', ')})`;
   const lines=[`\n📊 KADELLTHEPHYSIO DATA`,`─────────────────────────`,
     `📅 Weekly km: ${d.thisWk.toFixed(1)} km (${wkDiff>0?'+':''}${wkDiff.toFixed(0)}% vs ${d.avg28.toFixed(1)} km avg)`,
-    elevLine,wxLine,`💓 HR: ${domPct}% ${ZONES[d.dom].label} · Z2: ${z2Pct}%`,pwrLine,
-    `📈 ACWR: ${acwrStr} — ${acwrSt}`,`─────────────────────────`,`KadellThePhysio · Physiotherapy | 1:1 Coaching`].filter(Boolean).join('\n');
+    elevLine,wxLine,hrLine,pwrLine,
+    `📈 ACWR: ${acwrStr} — ${acwrSt}`,
+    loadLine,`─────────────────────────`,`KadellThePhysio · Physiotherapy | 1:1 Coaching`].filter(Boolean).join('\n');
   const prev=document.getElementById('cycCaption');
   prev.innerHTML=exist?`<span style="color:var(--muted)">${esc(exist)}</span><span class="new-content">${esc(lines)}</span>`:`<span class="new-content">${esc(lines)}</span>`;
   D.cyc.analysis.captionText=exist?exist+lines:lines;
